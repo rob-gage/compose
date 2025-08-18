@@ -1,0 +1,11 @@
+# Copyright Rob Gage 2025
+
+[package]
+name = "command-line-interface"
+version = "0.0.0"
+edition = "2024"
+
+[dependencies]
+clap = { version = "4.5.41", features = ["derive"] }
+core = { version = "0.0.0", path = "../core" }
+rustyline = "17.0.0"

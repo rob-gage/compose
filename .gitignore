@@ -1,0 +1,7 @@
+# Copyright Rob Gage 2025
+
+# build files
+target
+
+# IDE files
+.idea
