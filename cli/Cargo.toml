@@ -1,0 +1,19 @@
+# Copyright Rob Gage 2025
+
+[package]
+name = "compose_cli"
+version = "0.0.1"
+license = "MIT"
+description = "The command line interface for the Compose language"
+readme = "../README.md"
+repository = "https://github.com/Compose-Language/compose"
+edition = "2021"
+
+[[bin]]
+name = "compose_cli"
+path = "src/main.rs"
+
+[dependencies]
+clap = { version = "4.5.41", features = ["derive"] }
+compose_vm = { version = "0.0.1", path = "../vm" }
+rustyline = "17.0.0"

@@ -1,5 +1,5 @@
 # Copyright Rob Gage 2025
 
 [workspace]
-members = [ "command-line-interface", "core"]
+members = ["cli", "vm"]
 resolver = "2"

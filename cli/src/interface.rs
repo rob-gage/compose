@@ -22,11 +22,11 @@ impl Interface {
             None => read_evaluate_print_loop(),
             // build files into library if subcommand `build` was used
             Some (Command::Build { files }) => {
-
+                unimplemented!()
             },
             // build and run files if subcommand `run` was used
             Some (Command::Run { files }) => {
-
+                unimplemented!()
             },
         }
     }

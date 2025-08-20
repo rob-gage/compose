@@ -1,6 +1,6 @@
 // Copyright Rob Gage 2025
 
-use core::{
+use compose_vm::{
     Function,
     Namespace,
     Stack,
