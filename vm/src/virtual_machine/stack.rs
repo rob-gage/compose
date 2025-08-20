@@ -6,18 +6,14 @@ use smallvec::{
 };
 use std::{
     cell::UnsafeCell,
-    fmt::{
-        Display,
-        Formatter
-    },
     mem::swap,
 };
-use crate::virtual_machine::data::Data::Boolean;
 use super::{
     Combinator,
     Data,
     FunctionStorage,
     Integer,
+    Namespace,
     Term,
 };
 
@@ -36,12 +32,12 @@ impl Stack {
 
 
     /// Displays the top of the stack as a string
-    pub fn display_stack(&self) -> String {
+    pub fn display_stack(&self, namespace: &Namespace) -> String {
         const DISPLAY_COUNT: usize = 5;
         let mut collected: Vec<String> = Vec::new();
         for i in (0..DISPLAY_COUNT).rev() {
             if let Some(item) = self.get_from_top(i) {
-                collected.push(format!("{}", item));
+                collected.push(item.display(&namespace));
             }
         }
         let string: String = collected.join(" ");
@@ -61,38 +57,25 @@ impl Stack {
     ) -> Result<(), &'static str> {
         use crate::virtual_machine::combinator::Combinator::*;
 
-        // helper function to apply a lambda, taking its term sequence indices
-        fn apply_lambda(
-            storage: &FunctionStorage,
-            stack: &mut Stack,
-            term_sequence_indices: &[usize]
-        ) -> Result<(), &'static str> {
-            for &index in term_sequence_indices {
-                let sequence: &[Term] = storage.get_body(index);
-                stack.evaluate_term_sequence(storage, sequence)?;
-            }
-            Ok (())
-        }
-
         // helper function to perform an arithmetic operation on the stack
         fn arithmetic_operation(
             stack: &mut Stack,
             operation: fn(Integer, Integer) -> Integer
         ) -> Result<(), &'static str> {
             if stack.size() < 2 {
-                Err ("Not enough items in the stack to perform arithmetic operation")
+                Err("Not enough items in the stack to perform arithmetic operation")
             } else {
                 let (b, a): (Integer, Integer) = match (
                     stack.pop().unwrap(),
                     stack.pop().unwrap()
                 ) {
-                    (Data::Integer (b), Data::Integer (a)) => {
+                    (Data::Integer(b), Data::Integer(a)) => {
                         (b, a)
                     }
-                    _ => return Err ("Can only perform arithmetic operation on integers")
+                    _ => return Err("Can only perform arithmetic operation on integers")
                 };
-                stack.push(Data::Integer (operation(a, b)));
-                Ok (())
+                stack.push(Data::Integer(operation(a, b)));
+                Ok(())
             }
         }
 
@@ -102,19 +85,19 @@ impl Stack {
             operation: fn(bool, bool) -> bool,
         ) -> Result<(), &'static str> {
             if stack.size() < 2 {
-                Err ("Not enough items in the stack to perform boolean logic operation")
+                Err("Not enough items in the stack to perform boolean logic operation")
             } else {
                 let (b, a): (bool, bool) = match (
                     stack.pop().unwrap(),
                     stack.pop().unwrap()
                 ) {
-                    (Data::Boolean (b), Data::Boolean (a)) => {
+                    (Data::Boolean(b), Data::Boolean(a)) => {
                         (b, a)
                     }
-                    _ => return Err ("Can only perform boolean logic operation on booleans")
+                    _ => return Err("Can only perform boolean logic operation on booleans")
                 };
-                stack.push(Data::Boolean (operation(a, b)));
-                Ok (())
+                stack.push(Data::Boolean(operation(a, b)));
+                Ok(())
             }
         }
 
@@ -124,11 +107,11 @@ impl Stack {
             operation: fn(Data, Data) -> Result<bool, &'static str>,
         ) -> Result<(), &'static str> {
             if stack.size() < 2 {
-                Err ("Not enough items in the stack to perform comparison operation")
+                Err("Not enough items in the stack to perform comparison operation")
             } else {
                 let (b, a): (Data, Data) = (stack.pop().unwrap(), stack.pop().unwrap());
-                stack.push(Data::Boolean (operation(a, b)?));
-                Ok (())
+                stack.push(Data::Boolean(operation(a, b)?));
+                Ok(())
             }
         }
 
@@ -152,14 +135,14 @@ impl Stack {
 
             ExclusiveOr => boolean_logic_operation(self, |a, b| a ^ b),
 
-            Not => if let Some (top) = self.pop() {
-                if let Data::Boolean (boolean) = top {
-                    self.push(Data::Boolean (!boolean));
-                    Ok (())
+            Not => if let Some(top) = self.pop() {
+                if let Data::Boolean(boolean) = top {
+                    self.push(Data::Boolean(!boolean));
+                    Ok(())
                 } else {
-                    Err ("Can only perform boolean \"not\" operation on boolean data")
+                    Err("Can only perform boolean \"not\" operation on boolean data")
                 }
-            } else { Err ("Cannot perform boolean \"not\" operation on empty stack") }
+            } else { Err("Cannot perform boolean \"not\" operation on empty stack") }
 
             Or => boolean_logic_operation(self, |a, b| a || b),
 
@@ -168,115 +151,114 @@ impl Stack {
             Equality => comparison_operation(self, |a, b| Ok(a == b)),
 
             GreaterThan => comparison_operation(self, |a, b| match (a, b) {
-                (Data::Integer (a), Data::Integer (b)) => Ok (a > b),
-                _ => Err ("Can only perform \"greater than\" operation on integers")
+                (Data::Integer(a), Data::Integer(b)) => Ok(a > b),
+                _ => Err("Can only perform \"greater than\" operation on integers")
             }),
 
             LessThan => comparison_operation(self, |a, b| match (a, b) {
-                (Data::Integer (a), Data::Integer (b)) => Ok (a < b),
-                _ => Err ("Can only perform \"less than\" operation on integers")
+                (Data::Integer(a), Data::Integer(b)) => Ok(a < b),
+                _ => Err("Can only perform \"less than\" operation on integers")
             }),
 
             // functional combinators
 
             Apply => {
                 let top: Option<Data> = self.pop();
-                if let Some (Data::Lambda (sequence_indices)) = top {
-                    apply_lambda(storage, self, &sequence_indices)?;
-                    Ok (())
-                } else { Err ("Stack must have a lambda on top to be applied") }
+                if let Some(Data::Lambda(lambda_body)) = top {
+                    self.evaluate_function_body(storage, &lambda_body)?;
+                    Ok(())
+                } else { Err("Stack must have a lambda on top to be applied") }
             },
 
             Compose => match self.pop() {
-                Some (Data::Lambda (b_indices)) =>
+                Some(Data::Lambda(b_indices)) =>
                     match self.get_mutable_from_top(0) {
-                    Some (Data::Lambda (a_indices)) => {
-                        a_indices.extend(b_indices);
-                        Ok (())
-                    }
-                    _ => Err (
-                        "Cannot perform `compose` operation; second from top of stack is \
+                        Some(Data::Lambda(a_indices)) => {
+                            a_indices.extend(b_indices);
+                            Ok(())
+                        }
+                        _ => Err(
+                            "Cannot perform `compose` operation; second from top of stack is \
                                 not a lambda"
-                    )
-                }
-                _ => Err (
+                        )
+                    }
+                _ => Err(
                     "Cannot perform `compose` operation; top of stack is not a lambda"
                 )
             }
 
             If => match (self.pop(), self.pop()) {
                 (
-                    Some (Data::Lambda (false_indices)), Some (Data::Lambda (true_indices))
+                    Some(Data::Lambda(false_body)), Some(Data::Lambda(true_body))
                 ) => match self.pop() {
-                    Some (Data::Boolean (boolean)) => if boolean {
-                        apply_lambda(storage, self, &true_indices)?; Ok (())
+                    Some(Data::Boolean(boolean)) => if boolean {
+                        self.evaluate_function_body(storage, &true_body)
                     } else {
-                        apply_lambda(storage, self, &false_indices)?; Ok (())
+                        self.evaluate_function_body(storage, &false_body)
                     }
-                    _ => Err ("Cannot perform `if` operation unless there is a boolean below \
+                    _ => Err("Cannot perform `if` operation unless there is a boolean below \
                         the two lambdas on top of the stack")
                 },
-                _ => Err ("Cannot perform `if` operation unless there are two lambdas on top of \
+                _ => Err("Cannot perform `if` operation unless there are two lambdas on top of \
                 the stack"),
             }
 
             Under => match (self.pop(), self.pop()) {
-                (Some (Data::Lambda (b_indices)), Some (a)) => {
-                    apply_lambda(storage, self, &b_indices)?;
-                    self.push(a);
-                    Ok (())
+                (Some(Data::Lambda(lambda_body)), Some(top)) => {
+                    self.evaluate_function_body(storage, &lambda_body)?;
+                    self.push(top);
+                    Ok(())
                 }
-                _ => Err ("Cannot perform `under` operation unless there is a lambda under another \
+                _ => Err("Cannot perform `under` operation unless there is a lambda under another \
                 item on top of the stack"),
             }
 
             // stack manipulation combinators
 
-            Copy => if let Some (top) = self.get_from_top(0) {
+            Copy => if let Some(top) = self.get_from_top(0) {
                 self.push(top.clone());
-                Ok (())
-            } else { Err ("No items the in stack to be copied") },
+                Ok(())
+            } else { Err("No items the in stack to be copied") },
 
             Drop => {
-                if let Some (top) = self.pop() {
-                    Ok (())
-                } else { Err ("No items in the stack to be dropped") }
+                if let Some(top) = self.pop() {
+                    Ok(())
+                } else { Err("No items in the stack to be dropped") }
             },
 
             Hop => {
-                if let Some (top) = self.get_from_top(1) {
+                if let Some(top) = self.get_from_top(1) {
                     self.push(top.clone());
-                    Ok (())
-                } else { Err ("Not enough items in the stack to be hopped") }
+                    Ok(())
+                } else { Err("Not enough items in the stack to be hopped") }
             },
 
             Rotate => {
                 if self.size() < 3 {
-                    Err ("Not enough items in the stack to rotate")
+                    Err("Not enough items in the stack to rotate")
                 } else {
                     let a: &mut Data = self.get_mutable_from_top(2).unwrap();
                     let b: &mut Data = self.get_mutable_from_top(1).unwrap();
                     let c: &mut Data = self.get_mutable_from_top(0).unwrap();
                     swap(a, c);
                     swap(b, c);
-                    Ok (())
+                    Ok(())
                 }
             },
 
             Swap => {
                 if self.size() < 2 {
-                    Err ("Not enough items in the stack to swap")
+                    Err("Not enough items in the stack to swap")
                 } else {
                     swap(
                         self.get_mutable_from_top(0).unwrap(),
                         self.get_mutable_from_top(1).unwrap(),
                     );
-                    Ok (())
+                    Ok(())
                 }
             },
 
-            _ => Err ("Combinator is not yet implemented"),
-
+            _ => Err("Combinator is not yet implemented"),
         }
     }
 
@@ -289,33 +271,31 @@ impl Stack {
     ) -> Result<(), &'static str> {
         // println!("evaluated term: {:?}", term);
         match term {
-
-            Term::Application (identifier) => {
-                let sequence: &[Term] = storage.get_body(*identifier);
-                self.evaluate_term_sequence(storage, sequence)
+            Term::Application(identifier) => {
+                let function_body: &[Term] = storage.get_body(*identifier);
+                self.evaluate_function_body(storage, function_body)
             },
 
-            Term::Combinator (combinator) => self.evaluate_combinator(storage, combinator.clone()),
+            Term::Combinator(combinator) => self.evaluate_combinator(storage, combinator.clone()),
 
-            Term::Data (data) => {
+            Term::Data(data) => {
                 self.push(data.clone());
-                Ok (())
+                Ok(())
             }
-
         }
     }
 
 
-    /// Evaluates a sequence of `Term`s
-    pub fn evaluate_term_sequence(
+    /// Evaluates a function body represented by `&[Term]`
+    pub fn evaluate_function_body(
         &mut self,
         storage: &FunctionStorage,
-        sequence: &[Term],
+        body: &[Term],
     ) -> Result<(), &'static str> {
-        for term in sequence {
+        for term in body {
             self.evaluate_term(storage, term)?
         }
-        Ok (())
+        Ok(())
     }
 
 
@@ -375,14 +355,4 @@ impl Stack {
     }
 
 
-}
-
-
-impl Display for Stack {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        for term in unsafe { &*self.buffer.get() } {
-            write!(f, "  {}", term)?;
-        }
-        Ok(())
-    }
 }

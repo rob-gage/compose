@@ -1,9 +1,5 @@
 // Copyright Rob Gage 2025
 
-use std::fmt::{
-    Display,
-    Formatter
-};
 use super::{
     Combinator,
     Data,
@@ -30,8 +26,8 @@ impl Term {
     /// Creates a new `Data (Boolean)` term from a `bool`
     pub fn new_boolean(string: &str) -> Self {
         match string {
-            "true" => Self::Data (Data::Boolean (true)),
-            "false" => Self::Data (Data::Boolean (false)),
+            "true" => Self::Data(Data::Boolean(true)),
+            "false" => Self::Data(Data::Boolean(false)),
             _ => unreachable!("`new_boolean` should only be called with strings parsable to \
             booleans"),
         }
@@ -41,14 +37,8 @@ impl Term {
     ///
     /// (will fail if the `&str` is not a parsable `Integer`)
     pub fn new_integer(string: &str) -> Self {
-        Self::Data (Data::Integer (Integer::from_string(string)
+        Self::Data(Data::Integer(Integer::from_string(string)
             .expect("String provided to `new_integer` function is a parsable `Integer`")))
     }
 
-}
-
-impl Display for Term {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        unimplemented!()
-    }
 }

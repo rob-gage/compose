@@ -7,7 +7,6 @@ use std::{
         HashMap,
         HashSet,
     },
-    iter::Extend,
     sync::Arc,
 };
 use super::{
@@ -23,6 +22,8 @@ pub struct Namespace {
     function_storage: Arc<UnsafeCell<FunctionStorage>>,
     /// The indices of defined functions in the function storage mapped by name
     indices_by_name: HashMap<String, usize>,
+    /// The names of defined functions in the function storage mapped by index
+    names_by_index: HashMap<usize, String>,
 }
 
 impl Namespace {
@@ -35,8 +36,18 @@ impl Namespace {
         let index: usize = self.resolve_body(unresolved_function.body())?;
         if let Some (name) = unresolved_function.name() {
             self.indices_by_name.insert(name.to_string(), index);
+            self.names_by_index.insert(index, name.to_string());
         }
         Ok (Function::new(&self.function_storage, index))
+    }
+
+    /// Displays a term
+    pub fn display_term(&self, term: &Term) -> String {
+        match term {
+            Term::Application (function_index) => self.names_by_index[function_index].clone(),
+            Term::Combinator (combinator) => combinator.name().to_string(),
+            Term::Data (data) => data.display(&self),
+        }
     }
 
     /// Gets a named `Function` from the `Namespace` if it exists
@@ -51,6 +62,7 @@ impl Namespace {
         Self {
             function_storage: Arc::new(UnsafeCell::new(FunctionStorage::new())),
             indices_by_name: HashMap::new(),
+            names_by_index: HashMap::new(),
         }
     }
 
@@ -92,7 +104,8 @@ impl Namespace {
                 // resolve lambdas by storing them as functions
                 UnresolvedLambda (unresolved_terms) => {
                     let lambda_index: usize = self.resolve_body(unresolved_terms)?;
-                    resolved_terms.push(Term::Data (Data::Lambda (vec![lambda_index])))
+                    let function: Function = Function::new(&self.function_storage, lambda_index);
+                    resolved_terms.push(Term::Data (Data::Lambda (function.body().to_vec())))
                 },
                 // resolves `Recursion`s to `Application`s with the index this function will have
                 UnresolvedRecursion => resolved_terms.push(

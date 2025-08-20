@@ -84,7 +84,7 @@ fn free_terms(
                     if let Err (error) = function.evaluate(stack) {
                         eprintln!("Evaluation error: {}", error)
                     } else {
-                        println!("\n    {}\n", stack.display_stack());
+                        println!("\n    {}\n", stack.display_stack(&namespace));
                     }
                 },
                 Err(error) => eprintln!("Required functions are not defined: {:?}", error)

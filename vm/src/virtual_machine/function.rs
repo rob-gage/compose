@@ -29,7 +29,7 @@ impl Function {
     /// Evaluate the `Function`
     pub fn evaluate(&self, stack: &mut Stack) -> Result<(), String> {
         let storage: &mut FunctionStorage = unsafe { &mut *self.function_storage.get() };
-        stack.evaluate_term_sequence(storage, self.body())
+        stack.evaluate_function_body(storage, self.body())
             .map_err(|s| s.to_string())
     }
 

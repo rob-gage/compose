@@ -1,11 +1,10 @@
 // Copyright Rob Gage 2025
 
-use std::fmt::{
-    self,
-    Display,
-    Formatter
+use crate::Namespace;
+use super::{
+    Integer,
+    Term,
 };
-use super::Integer;
 
 /// Data that can be stored on the `Stack`
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -18,7 +17,7 @@ pub enum Data {
     Integer (Integer),
 
     /// An anonymous function
-    Lambda (Vec<usize>),
+    Lambda (Vec<Term>),
 
     /// A list of `Data`
     List (Vec<Data>),
@@ -28,27 +27,30 @@ pub enum Data {
 
 }
 
-impl Display for Data {
-    fn fmt(&self, f: &mut Formatter) -> Result<(), fmt::Error> {
+impl Data {
+
+    pub fn display(&self, namespace: &Namespace) -> String {
         match self {
 
-            Data::Boolean (boolean) => write!(
-                f, "{}",
-                if *boolean { "true" } else { "false" }
+            Data::Boolean (boolean) => format!("{}", if *boolean { "true" } else { "false" }),
+
+            Data::Integer (integer) => format!("{}", integer.to_string()),
+
+            Data::Lambda (terms) => format!("( {} )", terms.iter()
+                .map(|term| namespace.display_term(term))
+                .collect::<Vec<String>>()
+                .join(" ")
             ),
 
-            Data::Integer (integer) => write!(f, "{}", integer.to_string()),
-
-            Data::Lambda (_) => write!(f, "λ"),
-
-            Data::List (items) => write!(f, "[ {} ]", items.iter()
-                .map(|term| format!("{}", term))
+            Data::List (items) => format!("[ {} ]", items.iter()
+                .map(|item| item.display(namespace))
                 .collect::<Vec<_>>()
                 .join(" ")
             ),
 
-            Data::String (string) => write!(f, "\"{}\"", string),
+            Data::String (string) => format!("\"{}\"", string),
 
         }
     }
+
 }

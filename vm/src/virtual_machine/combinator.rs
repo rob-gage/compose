@@ -1,21 +1,37 @@
 // Copyright Rob Gage 2025
 
-use nom::{
-    branch::alt,
-    bytes::complete::tag,
-    combinator::value,
-    IResult,
-    Parser,
-};
+macro_rules! combinators {
+    (
+        $(
+            $(#[$meta:meta])*
+            $variant:ident :: $name:expr
+        ),* $(,)?
+    ) => {
 
-use std::fmt::{
-    Display,
-    Formatter,
-};
+        /// A concatenative combinator that modifies the stack
+        #[derive(Clone, Copy, Debug, Eq, PartialEq)]
+        pub enum Combinator {
+            $(
+                $variant,
+            )*
+        }
 
-/// A concatenative combinator that modifies the stack
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub enum Combinator {
+        impl Combinator {
+
+            /// Returns the name of the `Combinator`
+            pub const fn name(&self) -> &'static str {
+                match self {
+                    $(
+                        Combinator::$variant => $name,
+                    )*
+                }
+            }
+
+        }
+    };
+}
+
+combinators! {
 
     /// # Arithmetic Combinators
 
@@ -24,14 +40,14 @@ pub enum Combinator {
     /// `a b -> (a + b)`
     ///
     /// Adds the two numbers on top of the stack
-    Add,
+    Add :: "+",
 
     /// ## Divide
     ///
     /// `a b -> (a / b)`
     ///
     /// Divides the second number on top of the stack by the number on top of the stack
-    Divide,
+    Divide :: "/",
 
     /// ## Modulo
     ///
@@ -39,21 +55,21 @@ pub enum Combinator {
     ///
     /// Evaluates to the remainder of the second number on top of the stack divided by the first
     /// number on top of the stack
-    Modulo,
+    Modulo :: "%",
 
     /// ## Multiply
     ///
     /// `a b -> (a * b)`
     ///
     /// Multiplies the two numbers on top of the stack
-    Multiply,
+    Multiply :: "*",
 
     /// ## Subtract
     ///
     /// `a b -> (a - b)`
     ///
     /// Subtracts the number on top of the stack from the second number on top of the stack
-    Subtract,
+    Subtract :: "-",
 
     /// # Boolean Logic Combinators
 
@@ -63,7 +79,7 @@ pub enum Combinator {
     ///
     /// Transforms the two booleans on top of the stack to one with a true value if they are both
     /// true, otherwise transforms them into a boolean with a false value.
-    And,
+    And :: "&",
 
     /// ## Exclusive Or
     ///
@@ -71,14 +87,14 @@ pub enum Combinator {
     ///
     /// Transforms the two booleans on top of the stack to one with a true value if only one is
     /// true, otherwise transforms them into a boolean with a false value.
-    ExclusiveOr,
+    ExclusiveOr :: "^",
 
     /// ## Not
     ///
     /// `a -> !a`
     ///
     /// Transforms a boolean on top of the stack to true if it is false, and false if it is true.
-    Not,
+    Not :: "!",
 
     /// ## Or
     ///
@@ -86,7 +102,7 @@ pub enum Combinator {
     ///
     /// Transforms the two booleans on top of the stack to one with a true value if either one is
     /// true, otherwise transforms them into a boolean with a false value.
-    Or,
+    Or :: "|",
 
     /// ## Comparison Combinators
 
@@ -96,7 +112,7 @@ pub enum Combinator {
     ///
     /// Evaluates to a true boolean value if the top two items on the stack are equal, otherwise
     /// evaluates to a false boolean value.
-    Equality,
+    Equality :: "=",
 
     /// ## Greater Than
     ///
@@ -104,7 +120,7 @@ pub enum Combinator {
     ///
     /// Evaluates to a true boolean value if the integer on top of the stack is less than the
     /// one below it.
-    GreaterThan,
+    GreaterThan :: ">",
 
     /// ## Less Than
     ///
@@ -112,7 +128,7 @@ pub enum Combinator {
     ///
     /// Evaluates to a true boolean value if the integer on top of the stack is greater than the
     /// one below it.
-    LessThan,
+    LessThan :: "<",
 
     /// # Functional Combinators
 
@@ -121,7 +137,7 @@ pub enum Combinator {
     /// `a |f| -> a ...`
     ///
     /// Applies the function on top of the stack
-    Apply,
+    Apply :: "apply",
 
     /// ## If
     ///
@@ -130,21 +146,21 @@ pub enum Combinator {
     /// Applies function `|f|` (third from top of stack) to term `a` (fourth from top of stack) if
     /// boolean `b` (top of stack) is a true, otherwise applies function `|g|` (second from tbe top
     /// of stack) to term `a` and the stack below
-    If,
+    If :: "if",
 
     /// ## Compose
     ///
     /// `|f| |g| -> |f g|`
     ///
     /// Composes a function from two functions on top of the stack
-    Compose,
+    Compose :: "compose",
 
     /// ## Under
     ///
     /// `a b |f| -> a ... b`
     ///
     /// Applies the function on top of the stack to the second value from the top of the stack
-    Under,
+    Under :: "under",
 
     /// # List Processing Combinators
 
@@ -154,14 +170,14 @@ pub enum Combinator {
     ///
     /// Prepends an element `a` (second from top of the stack) to the list `[x]` (top of the
     /// stack)
-    Construct,
+    Construct :: "construct",
 
     /// ## Count
     ///
     /// `[x] -> a`
     ///
     /// Turns a list on top of the stack into its size
-    Count,
+    Count :: "count",
 
     /// ## Filter
     ///
@@ -169,7 +185,7 @@ pub enum Combinator {
     ///
     /// Filters the list `[x]` (second from top of the stack), keeping only the items
     /// that match a predicate function `|f|` (top of the stack)
-    Filter,
+    Filter :: "filter",
 
     /// ## Fold
     ///
@@ -178,21 +194,21 @@ pub enum Combinator {
     /// Reduces the list `[x]` (third from top of the stack) into a single accumulated
     /// value by applying the function `|f|` (on top of the stack) to the accumulator `a` (second
     /// from top of the stack) with each element of the list.
-    Fold,
+    Fold :: "fold",
 
     /// ## Head
     ///
     /// `[x] -> a`
     ///
     /// Returns the first element in the list on top of the stack
-    Head,
+    Head :: "head",
 
     /// ## Join
     ///
     /// `[x] [y] -> [x y]`
     ///
     /// Joins the two lists on top of the stack into one
-    Join,
+    Join :: "join",
 
     /// ## Map
     ///
@@ -200,14 +216,14 @@ pub enum Combinator {
     ///
     /// Applies the function `|f|` (top of the stack) to every item in the list `[x]` (second
     /// from top of the stack) creating a new list
-    Map,
+    Map :: "map",
 
     /// ## Tail
     ///
     /// `[x] -> a`
     ///
     /// Returns everything but the first element in the list on top of the stack
-    Tail,
+    Tail :: "tail",
 
     /// # Stack Manipulation Combinators
 
@@ -216,43 +232,34 @@ pub enum Combinator {
     /// `a -> a a`
     ///
     /// Duplicates the item on top of the stack
-    Copy,
+    Copy :: "copy",
 
     /// ## Drop
     ///
     /// `a b -> a`
     ///
     /// Removes the item on top of the stack
-    Drop,
+    Drop :: "drop",
 
     /// ## Hop
     ///
     /// `a b -> a b a`
     ///
     /// Pushes a duplicate of the second value from top of the stack to top of the stack
-    Hop,
+    Hop :: "hop",
 
     /// ## Rotate
     ///
     /// `a b c -> c a b`
     ///
     /// Moves the top item on the stack to the position below the next top two items
-    Rotate,
+    Rotate :: "rotate",
 
     /// ## Swap
     ///
     /// `a b -> b a`
     ///
     /// Swaps the two items on top of the stack
-    Swap,
+    Swap :: "swap"
 
-}
-
-
-impl Display for Combinator {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        match self {
-            _ => write!(f, "{:?}", self),
-        }
-    }
 }
