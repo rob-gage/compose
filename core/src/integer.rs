@@ -1,6 +1,6 @@
 // Copyright Rob Gage 2025
 
-use rug::Integer as RugInteger;
+use num_bigint::BigInt;
 use std::{
     ops::{
         Add,
@@ -13,13 +13,13 @@ use std::{
 };
 
 #[derive(Clone, Debug, Eq, Ord, PartialEq, PartialOrd)]
-pub struct Integer (RugInteger);
+pub struct Integer (BigInt);
 
 impl Integer {
 
     /// Create an `Integer` from a string slice
     pub fn from_string(string: &str) -> Option<Self> {
-        RugInteger::from_str(string) // parse rug integer from string
+        BigInt::from_str(string) // parse rug integer from string
             .ok() // convert result to option
             .map(Self) // apply `Integer` constructor
     }

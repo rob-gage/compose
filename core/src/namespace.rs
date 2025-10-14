@@ -1,6 +1,5 @@
 // Copyright Rob Gage 2025
 
-use crate::parser::{UnresolvedFunction, UnresolvedTerm};
 use std::{
     cell::UnsafeCell,
     collections::{
@@ -9,11 +8,13 @@ use std::{
     },
     sync::Arc,
 };
-use super::{
+use crate::{
     Data,
     Function,
     FunctionStorage,
     Term,
+    UnresolvedFunction,
+    UnresolvedTerm,
 };
 
 /// Allows definition and retrieval of named functions and anonymous functions
@@ -28,18 +29,18 @@ pub struct Namespace {
 
 impl Namespace {
 
-    /// Resolves and defines a new function in this `Namespace`
-    pub fn define(
-        &mut self,
-        unresolved_function: UnresolvedFunction
-    ) -> Result<Function, HashSet<String>> {
-        let index: usize = self.resolve_body(unresolved_function.body())?;
-        if let Some (name) = unresolved_function.name() {
-            self.indices_by_name.insert(name.to_string(), index);
-            self.names_by_index.insert(index, name.to_string());
-        }
-        Ok (Function::new(&self.function_storage, index))
-    }
+    // /// Resolves and defines a new function in this `Namespace`
+    // pub fn define(
+    //     &mut self,
+    //     unresolved_function: UnresolvedFunction
+    // ) -> Result<Function, HashSet<String>> {
+    //     let index: usize = self.resolve_body(unresolved_function.body())?;
+    //     if let Some (name) = unresolved_function.name() {
+    //         self.indices_by_name.insert(name.to_string(), index);
+    //         self.names_by_index.insert(index, name.to_string());
+    //     }
+    //     Ok (Function::new(&self.function_storage, index))
+    // }
 
     /// Displays a term
     pub fn display_term(&self, term: &Term) -> String {

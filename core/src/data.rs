@@ -1,7 +1,7 @@
 // Copyright Rob Gage 2025
 
 use crate::Namespace;
-use super::{
+use crate::{
     Integer,
     Term,
 };

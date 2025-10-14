@@ -7,14 +7,20 @@ mod function_storage;
 mod integer;
 mod namespace;
 mod stack;
+mod syntax;
 mod term;
 
+use combinator::Combinator;
 use data::Data;
+use function::Function;
 use function_storage::FunctionStorage;
+use integer::Integer;
+use syntax::{
+    SyntaxError,
+    UnresolvedFunction,
+    UnresolvedTerm,
+};
+use term::Term;
 
-pub use combinator::Combinator;
-pub use function::Function;
-pub use integer::Integer;
 pub use namespace::Namespace;
 pub use stack::Stack;
-pub use term::Term;

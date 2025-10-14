@@ -15,5 +15,4 @@ path = "src/main.rs"
 
 [dependencies]
 clap = { version = "4.5.41", features = ["derive"] }
-compose_vm = { version = "0.0.1", path = "../vm" }
 rustyline = "17.0.0"

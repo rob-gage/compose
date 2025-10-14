@@ -55,7 +55,7 @@ impl Stack {
         storage: &FunctionStorage,
         combinator: Combinator
     ) -> Result<(), &'static str> {
-        use crate::virtual_machine::combinator::Combinator::*;
+        use Combinator::*;
 
         // helper function to perform an arithmetic operation on the stack
         fn arithmetic_operation(
@@ -313,7 +313,8 @@ impl Stack {
     pub fn get_from_top(&self, index: usize) -> Option<&Data> {
         let stack_index: usize = self.top.checked_sub(1 + index)?;
         unsafe {
-            (*self.buffer.get()).get(stack_index)
+            let buffer: &SmallVec<[Data; STACK_STACK_SIZE]> = &*self.buffer.get();
+            buffer.get(stack_index)
         }
     }
 
@@ -323,7 +324,8 @@ impl Stack {
     pub fn get_mutable_from_top(&self, index: usize) -> Option<&mut Data> {
         let stack_index: usize = self.top.checked_sub(1 + index)?;
         unsafe {
-            (*self.buffer.get()).get_mut(stack_index)
+            let buffer: &mut SmallVec<[Data; STACK_STACK_SIZE]> = &mut *self.buffer.get();
+            buffer.get_mut(stack_index)
         }
     }
 

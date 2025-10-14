@@ -1,38 +1,20 @@
 // Copyright Rob Gage 2025
 
-mod parse_identifier;
-mod unresolved_function;
 mod unresolved_term;
 mod parser_error;
-mod syntax_error;
-
+mod term_sequence;
 
 use crate::Namespace;
-use parse_identifier::parse_identifier;
 use std::ops::Range;
 
-pub use syntax_error::{
+pub use crate::syntax::syntax_error::{
     SyntaxError,
     SyntaxErrorVariant,
 };
-pub use unresolved_function::UnresolvedFunction;
+pub use crate::syntax::unresolved_function::UnresolvedFunction;
 pub use unresolved_term::UnresolvedTerm;
 
-use codespan_reporting::{
-    diagnostic::{
-        Diagnostic,
-        Label,
-        Severity
-    },
-    files::SimpleFiles,
-    term::{
-        termcolor::{
-            ColorChoice,
-            StandardStream
-        },
-        Config,
-    },
-};
+use codespan_reporting::files::SimpleFiles;
 
 /// Parser that builds a `Namespace` from source files
 pub struct Parser {
