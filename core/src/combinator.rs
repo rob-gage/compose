@@ -1,10 +1,12 @@
 // Copyright Rob Gage 2025
 
+use pups::*;
+
 macro_rules! combinators {
     (
         $(
             $(#[$meta:meta])*
-            $variant:ident :: $name:expr
+            $variant:ident :: $token:expr
         ),* $(,)?
     ) => {
 
@@ -22,7 +24,7 @@ macro_rules! combinators {
             pub const fn name(&self) -> &'static str {
                 match self {
                     $(
-                        Combinator::$variant => $name,
+                        Combinator::$variant => $token,
                     )*
                 }
             }
