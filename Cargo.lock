@@ -304,9 +304,9 @@ dependencies = [
 
 [[package]]
 name = "pups"
-version = "0.1.5"
+version = "0.1.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6d68d0c9a82269df2b96da4dac627a0ac115b77627b3a7685e333ceac66f916a"
+checksum = "dc42401f9e7b20b0e9e6120fd24385633cb783658cd1a38783b0f4aa5889de75"
 dependencies = [
  "pups_core",
  "pups_text",
@@ -314,15 +314,15 @@ dependencies = [
 
 [[package]]
 name = "pups_core"
-version = "0.1.5"
+version = "0.1.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ec7f3f3fcffd7a2689ec8481e4f08a676b3dee8f7455c420b22c9b3704df7e41"
+checksum = "34ca17a4f76d01c7c26a68dc3b7db21d15a083d87812c9bb527b9a47910f8ed5"
 
 [[package]]
 name = "pups_text"
-version = "0.1.5"
+version = "0.1.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e0a39582b35b73709b397fc88442407e29c40a2bc83e99ed69976be0d47b815a"
+checksum = "3ae1dab11645125263679f8105ca0795f2e31cb1e514dd3c2f88291d799b1a74"
 dependencies = [
  "pups_core",
  "unicode-ident",

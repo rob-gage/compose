@@ -47,52 +47,51 @@ impl UnresolvedTerm {
 
 /// Parses a boolean term
 fn boolean(input: &Text) -> ParseResult<UnresolvedTerm> {
-    token("true").map(|_| Data::Boolean (true))
-        .or(token("false").map(|_| Data::Boolean (false)))
-        .map(|boolean| UnresolvedTerm::Resolved (Term::Data (boolean)))
-        .map_error(|_| ())
+    choice([
+        token("true").emit(UnresolvedTerm::Resolved (Term::Data (Data::Boolean (true)))),
+        token("false").emit(UnresolvedTerm::Resolved (Term::Data (Data::Boolean (false)))),
+    ])
         .parse(input)
-
 }
 
-// fn combinator(input: &Text) -> ParseResult<UnresolvedTerm> {
-//     use Combinator::*;
-//     fn combinator_parser<'a>(
-//         combinator: Combinator
-//     ) -> impl Parser<'a, Text<'a>, Output = Combinator, Error = (), Message = ()> {
-//         token(combinator.name()).map(move |_| combinator)
-//     }
-//     // arithmetic
-//     combinator_parser(Add)
-//         .or(combinator_parser(Divide))
-//         .or(combinator_parser(Modulo))
-//         .or(combinator_parser(Multiply))
-//         .or(combinator_parser(Subtract))
-//     // boolean logic
-//         .or(combinator_parser(And))
-//         .or(combinator_parser(ExclusiveOr))
-//         .or(combinator_parser(Not))
-//         .or(combinator_parser(Or))
-//     // comparison
-//         .or(combinator_parser(Equality))
-//         .or(combinator_parser(GreaterThan))
-//         .or(combinator_parser(LessThan))
-//     // functional
-//         .or(combinator_parser(Apply))
-//         .or(combinator_parser(If))
-//         .or(combinator_parser(Compose))
-//         .or(combinator_parser(Under))
-//     // stack manipulation
-//         .or(combinator_parser(Copy))
-//         .or(combinator_parser(Drop))
-//         .or(combinator_parser(Hop))
-//         .or(combinator_parser(Rotate))
-//         .or(combinator_parser(Swap))
-//     // ---------------------------------------------------
-//         .map(|combinator| UnresolvedTerm::Resolved (Term::Combinator (combinator)))
-//         .map_error(|_| ())
-//         .parse(input)
-// }
+fn combinator(input: &Text) -> ParseResult<UnresolvedTerm> {
+    use Combinator::*;
+    fn combinator_parser<'a>(
+        combinator: Combinator
+    ) -> impl Parser<'a, UnresolvedTerm, (), (), Text<'a>> {
+        token(combinator.name()).emit(UnresolvedTerm::Resolved (Term::Combinator (combinator)))
+    }
+    choice([
+        // arithmetic
+        combinator_parser(Add),
+        combinator_parser(Divide),
+        combinator_parser(Modulo),
+        combinator_parser(Multiply),
+        combinator_parser(Subtract),
+        // boolean logic
+        combinator_parser(And),
+        combinator_parser(ExclusiveOr),
+        combinator_parser(Not),
+        combinator_parser(Or),
+        // comparison
+        combinator_parser(Equality),
+        combinator_parser(GreaterThan),
+        combinator_parser(LessThan),
+        // functional
+        combinator_parser(Apply),
+        combinator_parser(Compose),
+        combinator_parser(If),
+        combinator_parser(Under),
+        // stack manipulation
+        combinator_parser(Copy),
+        combinator_parser(Drop),
+        combinator_parser(Hop),
+        combinator_parser(Rotate),
+        combinator_parser(Swap),
+    ])
+        .parse(input)
+}
+
 
 /// Parses an integer term
 fn integer(input: &Text) -> ParseResult<UnresolvedTerm> {
