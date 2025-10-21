@@ -45,6 +45,13 @@ impl UnresolvedTerm {
 //     )).parse(input)
 // }
 
+/// Parses a function application term
+fn application(input: &Text) -> ParseResult<UnresolvedTerm> {
+    unicode_identifier()
+        .map(|identifier: &str| UnresolvedTerm::UnresolvedApplication (identifier.to_string()))
+        .parse(input)
+}
+
 /// Parses a boolean term
 fn boolean(input: &Text) -> ParseResult<UnresolvedTerm> {
     choice([
@@ -54,6 +61,7 @@ fn boolean(input: &Text) -> ParseResult<UnresolvedTerm> {
         .parse(input)
 }
 
+/// Parses a combinator term
 fn combinator(input: &Text) -> ParseResult<UnresolvedTerm> {
     use Combinator::*;
     fn combinator_parser<'a>(
