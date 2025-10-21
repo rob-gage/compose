@@ -7,7 +7,6 @@ use crate::{
     Term
 };
 use pups::*;
-use crate::data::Data::Lambda;
 
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub enum UnresolvedTerm {
@@ -29,21 +28,26 @@ pub enum UnresolvedTerm {
 impl UnresolvedTerm {
 
     pub fn parse(input: &Text) -> ParseResult<Self> {
-        todo!()
+        choice([
+            lambda,
+            boolean,
+            combinator,
+            integer,
+            application,
+        ])
+            .parse(input)
+    }
+
+    pub fn parse_many(input: &Text) -> ParseResult<Vec<Self>> {
+        separated(
+            Self::parse,
+            whitespace()
+        )
+            .parse(input)
     }
 
 }
 
-// /// Parse an `UnresolvedTerm`
-// fn parse_unresolved_term(input: &str) -> IResult<&str, UnresolvedTerm> {
-//     alt((
-//         parse_lambda,
-//         parse_boolean,
-//         parse_combinator,
-//         parse_integer,
-//         map(parse_identifier, UnresolvedTerm::UnresolvedApplication),
-//     )).parse(input)
-// }
 
 /// Parses a function application term
 fn application(input: &Text) -> ParseResult<UnresolvedTerm> {
@@ -51,6 +55,7 @@ fn application(input: &Text) -> ParseResult<UnresolvedTerm> {
         .map(|identifier: &str| UnresolvedTerm::UnresolvedApplication (identifier.to_string()))
         .parse(input)
 }
+
 
 /// Parses a boolean term
 fn boolean(input: &Text) -> ParseResult<UnresolvedTerm> {
@@ -60,6 +65,7 @@ fn boolean(input: &Text) -> ParseResult<UnresolvedTerm> {
     ])
         .parse(input)
 }
+
 
 /// Parses a combinator term
 fn combinator(input: &Text) -> ParseResult<UnresolvedTerm> {
@@ -97,6 +103,18 @@ fn combinator(input: &Text) -> ParseResult<UnresolvedTerm> {
         combinator_parser(Rotate),
         combinator_parser(Swap),
     ])
+        .parse(input)
+}
+
+
+/// Parses a lambda term
+fn lambda(input: &Text) -> ParseResult<UnresolvedTerm> {
+    delimited(
+        token("(").then(whitespace().or_not()),
+        UnresolvedTerm::parse_many,
+        whitespace().or_not().then(token(")"))
+    )
+        .map(|terms| UnresolvedTerm::UnresolvedLambda (terms))
         .parse(input)
 }
 
