@@ -1,120 +1,79 @@
 // Copyright Rob Gage 2025
 
-use std::{
-    cell::UnsafeCell,
-    collections::{
-        HashMap,
-        HashSet,
-    },
-    sync::Arc,
+use std::collections::{
+    HashMap,
+    HashSet,
 };
 use crate::{
     Data,
-    Function,
     FunctionStorage,
     Term,
-    UnresolvedFunction,
     UnresolvedTerm,
 };
 
 /// Allows definition and retrieval of named functions and anonymous functions
 pub struct Namespace {
     /// The function storage used to store functions defined in this namespace
-    function_storage: Arc<UnsafeCell<FunctionStorage>>,
+    function_storage: FunctionStorage,
     /// The indices of defined functions in the function storage mapped by name
-    indices_by_name: HashMap<String, usize>,
-    /// The names of defined functions in the function storage mapped by index
-    names_by_index: HashMap<usize, String>,
+    functions_by_name: HashMap<String, usize>,
 }
 
 impl Namespace {
 
-    // /// Resolves and defines a new function in this `Namespace`
-    // pub fn define(
-    //     &mut self,
-    //     unresolved_function: UnresolvedFunction
-    // ) -> Result<Function, HashSet<String>> {
-    //     let index: usize = self.resolve_body(unresolved_function.body())?;
-    //     if let Some (name) = unresolved_function.name() {
-    //         self.indices_by_name.insert(name.to_string(), index);
-    //         self.names_by_index.insert(index, name.to_string());
-    //     }
-    //     Ok (Function::new(&self.function_storage, index))
-    // }
-
-    /// Displays a term
-    pub fn display_term(&self, term: &Term) -> String {
-        match term {
-            Term::Application (function_index) => self.names_by_index[function_index].clone(),
-            Term::Combinator (combinator) => combinator.name().to_string(),
-            Term::Data (data) => data.display(&self),
+    /// Defines a named function in this `Namespace`
+    pub fn define_function(&mut self, name: &str, body: &[Term]) -> Result<(), ()> {
+        if self.functions_by_name.contains_key(name) { Err (()) } else {
+            let index: usize = self.function_storage.store_function(body);
+            self.functions_by_name.insert(name.to_string(), index);
+            debug_assert!(index != usize::MAX); // reserve usize::MAX for recursion
+            Ok (())
         }
-    }
-
-    /// Gets a named `Function` from the `Namespace` if it exists
-    pub fn get(&self, name: &str) -> Option<Function> {
-        if let Some (index) = self.indices_by_name.get(name) {
-            Some (Function::new(&self.function_storage, *index))
-        } else { None }
     }
 
     /// Creates a new `Namespace`
     pub fn new() -> Self {
         Self {
-            function_storage: Arc::new(UnsafeCell::new(FunctionStorage::new())),
-            indices_by_name: HashMap::new(),
-            names_by_index: HashMap::new(),
+            function_storage: FunctionStorage::new(),
+            functions_by_name: HashMap::new(),
         }
     }
 
-    /// Attempts to resolve a `&[UnresolvedTerm]` lambda, returning its index
-    fn resolve_body(
-        &mut self,
-        unresolved_body: &[UnresolvedTerm],
-    ) -> Result<usize, HashSet<String>> {
+    /// Attempts to resolve a sequence of unresolved terms
+    pub fn resolve_terms(
+        &self,
+        unresolved: &[UnresolvedTerm]
+    ) -> Result<Vec<Term>, HashSet<String>> {
         use UnresolvedTerm::*;
-        let storage: &mut FunctionStorage = unsafe { &mut *self.function_storage.get() };
-        // check for missing dependencies required for resolution
-        let missing_dependencies: HashSet<String> = HashSet::from_iter(
-            unresolved_body.iter()
-                .filter_map(|t| match t {
-                    UnresolvedTerm::UnresolvedApplication (name) => if self.indices_by_name
-                        .contains_key(name) {
-                        None
-                    } else {
-                        Some (name.clone())
-                    },
-                    _ => None,
-                })
-                .collect::<Vec<String>>()
-        );
-        if !missing_dependencies.is_empty() {
-            return Err(missing_dependencies);
-        }
-        // iterate through function body and resolve terms
-        let mut resolved_terms: Vec<Term> = vec![];
-        for term in unresolved_body {
-            match term {
-                // leave already resolved terms alone
-                Resolved (term) => resolved_terms.push(term.clone()),
-                // resolve function application
+        let mut resolved: Vec<Term> = Vec::with_capacity(unresolved.len());
+        let mut undefined: HashSet<String> = HashSet::new();
+        for unresolved_term in unresolved {
+            match unresolved_term {
+                // nothing needs to be done with already resolved terms
+                Resolved (term) => resolved.push(term.clone()),
+                // resolve function applications
                 UnresolvedApplication (name)
-                => if let Some (applied_function_index) = self.indices_by_name.get(name) {
-                    resolved_terms.push(Term::Application (*applied_function_index));
-                } else { unreachable!("Unresolvable applications are already filtered out") },
-                // resolve lambdas by storing them as functions
-                UnresolvedLambda (unresolved_terms) => {
-                    let lambda_index: usize = self.resolve_body(unresolved_terms)?;
-                    let function: Function = Function::new(&self.function_storage, lambda_index);
-                    resolved_terms.push(Term::Data (Data::Lambda (function.body().to_vec())))
-                },
-                // resolves `Recursion`s to `Application`s with the index this function will have
-                UnresolvedRecursion => resolved_terms.push(
-                    Term::Application (storage.next_index())
-                ),
+                => if let Some (function_index) = self.functions_by_name.get(name) {
+                    resolved.push(Term::Application (*function_index));
+                } else { undefined.insert(name.to_string()); },
+                // resolve lambdas
+                UnresolvedLambda (terms) => {
+                    let lambda: Data = Data::Lambda (match self.resolve_terms(terms) {
+                        Ok (lambda_terms) => lambda_terms,
+                        Err (lambda_undefined) => {
+                            undefined.extend(lambda_undefined);
+                            vec![]
+                        }
+                    });
+                    resolved.push(Term::Data (lambda));
+                }
+                // resolve recursive applications
+                UnresolvedRecursion => resolved.push(Term::Application (usize::MAX))
             }
         }
-        Ok (storage.store_function(&resolved_terms))
+        if undefined.is_empty() {
+            Ok (resolved)
+        } else { Err (undefined) }
     }
 
 }
