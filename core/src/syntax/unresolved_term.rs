@@ -27,6 +27,7 @@ pub enum UnresolvedTerm {
 
 impl UnresolvedTerm {
 
+    /// Parses an `UnresolvedTerm` from text
     pub fn parse(input: &Text) -> ParseResult<Self> {
         choice([
             lambda,
@@ -38,6 +39,7 @@ impl UnresolvedTerm {
             .parse(input)
     }
 
+    /// Parses several whitespace-separated `UnresolvedTerms`
     pub fn parse_many(input: &Text) -> ParseResult<Vec<Self>> {
         separated(
             Self::parse,

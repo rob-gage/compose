@@ -4,6 +4,7 @@ use super::{
     SyntaxError,
     UnresolvedTerm
 };
+use pups::*;
 
 /// An unresolved function that is stored in a `Namespace` until resolution
 #[derive(Clone)]
@@ -13,6 +14,23 @@ pub struct UnresolvedFunction {
     /// The name of the function
     name: String,
 }
+
+impl UnresolvedFunction {
+
+    /// Parses an `UnresolvedFunction` from text
+    pub fn parse(input: &Text) -> ParseResult<Self> {
+        terminated(unicode_identifier(), whitespace().or_not())
+            .then(delimited(
+                token(":").then(whitespace().or_not()),
+                UnresolvedTerm::parse_many,
+                whitespace().or_not().then(token(";"))
+            ))
+            .map(|(name, body)| Self { body, name: name.to_string() })
+            .parse(input)
+    }
+
+}
+
 //
 // impl UnresolvedFunction {
 //
