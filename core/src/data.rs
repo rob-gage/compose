@@ -27,30 +27,30 @@ pub enum Data {
 
 }
 
-impl Data {
-
-    pub fn display(&self, namespace: &Namespace) -> String {
-        match self {
-
-            Data::Boolean (boolean) => format!("{}", if *boolean { "true" } else { "false" }),
-
-            Data::Integer (integer) => format!("{}", integer.to_string()),
-
-            Data::Lambda (terms) => format!("( {} )", terms.iter()
-                .map(|term| namespace.display_term(term))
-                .collect::<Vec<String>>()
-                .join(" ")
-            ),
-
-            Data::List (items) => format!("[ {} ]", items.iter()
-                .map(|item| item.display(namespace))
-                .collect::<Vec<_>>()
-                .join(" ")
-            ),
-
-            Data::String (string) => format!("\"{}\"", string),
-
-        }
-    }
-
-}
+// impl Data {
+//
+//     pub fn display(&self, namespace: &Namespace) -> String {
+//         match self {
+//
+//             Data::Boolean (boolean) => format!("{}", if *boolean { "true" } else { "false" }),
+//
+//             Data::Integer (integer) => format!("{}", integer.to_string()),
+//
+//             Data::Lambda (terms) => format!("( {} )", terms.iter()
+//                 .map(|term| namespace.display_term(term))
+//                 .collect::<Vec<String>>()
+//                 .join(" ")
+//             ),
+//
+//             Data::List (items) => format!("[ {} ]", items.iter()
+//                 .map(|item| item.display(namespace))
+//                 .collect::<Vec<_>>()
+//                 .join(" ")
+//             ),
+//
+//             Data::String (string) => format!("\"{}\"", string),
+//
+//         }
+//     }
+//
+// }

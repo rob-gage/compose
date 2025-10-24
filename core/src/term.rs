@@ -11,9 +11,10 @@ pub enum Term {
 
     /// Application of a named function
     ///
-    /// The `usize` represents the index in the function storage of the function, or it represents
-    /// recursion of the named function the application is in if it is `usize::MAX`
-    Application (usize),
+    /// The `isize` represents the index in the function storage of the function, or it represents
+    /// recursion of the named function the application is in if it is `isize::MAX`. Recursions
+    /// are transformed into negative `isize` indices, pointing to functions stored at runtime
+    Application (isize),
 
     /// A combinator that performs an operation on the stack
     Combinator (Combinator),

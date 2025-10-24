@@ -2,18 +2,19 @@
 
 mod combinator;
 mod data;
-mod function;
-mod function_storage;
 mod integer;
 mod namespace;
 mod stack;
 mod syntax;
 mod term;
+mod functions;
 
 use combinator::Combinator;
 use data::Data;
-use function::Function;
-use function_storage::FunctionStorage;
+use functions::{
+    Function,
+    FunctionStorage,
+};
 use integer::Integer;
 use syntax::{
     SyntaxError,
