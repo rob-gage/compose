@@ -22,15 +22,6 @@ pub struct Namespace {
 
 impl Namespace {
 
-    /// Defines a named function in this `Namespace`
-    pub fn define_function(&mut self, name: &str, body: &[Term]) -> Result<(), ()> {
-        if self.functions_by_name.contains_key(name) { Err (()) } else {
-            let index: FunctionIndex = self.function_storage.store_function(body);
-            self.functions_by_name.insert(name.to_string(), index);
-            Ok (())
-        }
-    }
-
     /// Creates a new `Namespace`
     pub fn new() -> Self {
         Self {
@@ -39,13 +30,15 @@ impl Namespace {
         }
     }
 
-    /// Attempts to resolve a sequence of unresolved terms
+    /// Resolves a function, stores it in the `Namespace` and returns it's `FunctionIndex`
     pub fn resolve_function(
         &mut self,
         name: &str,
         body: &[UnresolvedTerm]
     ) -> Result<FunctionIndex, HashSet<String>> {
         use UnresolvedTerm::*;
+        let reserved_index: FunctionIndex = self.function_storage.reserve(body.len());
+        self.functions_by_name.insert(name.to_string(), reserved_index);
         let mut resolved: Vec<Term> = Vec::with_capacity(body.len());
         let mut undefined: HashSet<String> = HashSet::new();
         for unresolved_term in body {
@@ -57,12 +50,13 @@ impl Namespace {
                     if let Some (function_index) = self.functions_by_name.get(unresolved_name) {
                         resolved.push(Term::Application (*function_index));
                     } else if unresolved_name == name  {
-                        resolved.push(Term::Application (self.function_storage.reserve()))
+                        resolved.push(Term::Application (reserved_index));
                     } else { undefined.insert(name.to_string()); },
                 // resolve lambdas
-                UnresolvedLambda (terms) => {
-                    let lambda: Data = Data::Lambda (match self.resolve_function(terms) {
-                        Ok (lambda_terms) => lambda_terms,
+                UnresolvedLambda (lambda_body) => {
+                    let lambda: Data = Data::Lambda (match self.resolve_function("", lambda_body) {
+                        Ok (lambda_index) =>
+                            self.function_storage.get(lambda_index).to_vec(),
                         Err (lambda_undefined) => {
                             undefined.extend(lambda_undefined);
                             vec![]
@@ -73,8 +67,12 @@ impl Namespace {
             }
         }
         if undefined.is_empty() {
-            Ok (self.function_storage.store_function(&resolved))
-        } else { Err (undefined) }
+            self.function_storage.store(reserved_index, &resolved);
+            Ok (reserved_index)
+        } else {
+            self.functions_by_name.remove(name);
+            Err (undefined)
+        }
     }
 
 }

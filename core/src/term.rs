@@ -3,7 +3,6 @@
 use crate::{
     Combinator,
     Data,
-    Function,
     FunctionIndex,
     FunctionStorage,
     Stack,
@@ -39,7 +38,7 @@ impl Term {
         match self {
 
             Term::Application (function_index) => {
-                let function: Function = function_storage.get(*function_index);
+                let function: &[Term] = function_storage.get(*function_index);
                 function.evaluate(function_storage, stack)
             },
 

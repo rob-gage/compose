@@ -10,25 +10,6 @@ use crate::{
     Term,
 };
 
-/// A function that can be evaluated
-pub struct Function<'a> (&'a [Term]);
-
-impl Function<'_> {
-
-    /// Evaluate the `Function`
-    pub fn evaluate(
-        &self,
-        function_storage: &FunctionStorage,
-        stack: &mut Stack
-    ) -> Result<(), String> {
-        for term in self.0 {
-            term.evaluate(&function_storage, stack)?;
-        }
-        Ok (())
-    }
-
-}
-
 
 
 /// The index of a `Function` in a `FunctionStorage`
@@ -48,9 +29,9 @@ pub struct FunctionStorage {
 impl FunctionStorage {
 
     /// Gets the `&[Term]` body of a function from a `FunctionStorage`
-    pub fn get(&self, index: FunctionIndex) -> Function {
+    pub fn get(&self, index: FunctionIndex) -> &[Term] {
         let range: Range<usize> = self.functions[index.0].clone();
-        Function (&self.term_buffer[range])
+        &self.term_buffer[range]
     }
 
     /// Create a new `FunctionStorage`
@@ -60,7 +41,7 @@ impl FunctionStorage {
     } }
 
     /// Reserves a place to store a function with a given length in terms
-    pub const fn reserve(&mut self, length: usize) -> FunctionIndex {
+    pub fn reserve(&mut self, length: usize) -> FunctionIndex {
         let start: usize = self.term_buffer.len(); // start of function in term buffer
         let end: usize = start + length; // end of function in term buffer
         self.functions.push(start..end);
@@ -68,14 +49,12 @@ impl FunctionStorage {
         FunctionIndex (self.functions.len() - 1)
     }
 
-    /// Stores a new function in this `NamespaceStorage`, returning its index
-    pub fn store_function(&mut self, body: &[Term]) -> FunctionIndex {
-        let start: usize = self.term_buffer.len(); // start of function in term buffer
-        let end: usize = start + body.len(); // end of function in term buffer
-        self.term_buffer.extend_from_slice(body); // append the terms to the buffer
-        let range: Range<usize> = start..end; // store the range for this function in term buffer
-        self.functions.push(range);
-        FunctionIndex::new(self.functions.len() - 1)
+    /// Stores a function in the `FunctionStorage` at a `FunctionIndex`
+    pub fn store(&mut self, index: FunctionIndex, function: &[Term]) {
+        let range: Range<usize> = self.functions[index.0].clone();
+        debug_assert_eq!(range.end - range.start, function.len(), "Not enough space reserved in \
+        `FunctionStorage` for function");
+        self.term_buffer.splice(range, function.iter().cloned());
     }
 
 }
