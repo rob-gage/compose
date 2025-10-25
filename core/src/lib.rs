@@ -13,6 +13,7 @@ use combinator::Combinator;
 use data::Data;
 use functions::{
     Function,
+    FunctionIndex,
     FunctionStorage,
 };
 use integer::Integer;

@@ -1,13 +1,12 @@
 // Copyright Rob Gage 2025
 
-use crate::Namespace;
 use crate::{
     Integer,
     Term,
 };
 
 /// Data that can be stored on the `Stack`
-#[derive(Clone, Debug, Eq, PartialEq)]
+#[derive(Clone, Debug)]
 pub enum Data {
 
     /// A true or false value

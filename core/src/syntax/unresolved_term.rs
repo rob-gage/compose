@@ -8,7 +8,7 @@ use crate::{
 };
 use pups::*;
 
-#[derive(Clone, Debug, Eq, PartialEq)]
+#[derive(Clone, Debug)]
 pub enum UnresolvedTerm {
 
     /// A term that has already been resolved
@@ -19,9 +19,6 @@ pub enum UnresolvedTerm {
 
     /// An unresolved lambda term
     UnresolvedLambda (Vec<UnresolvedTerm>),
-
-    /// Unresolved recursive application
-    UnresolvedRecursion,
 
 }
 

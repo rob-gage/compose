@@ -11,53 +11,29 @@ use crate::{
 };
 
 /// A function that can be evaluated
-pub struct Function {
-    /// The `FunctionStorage` containing this `Function`
-    function_storage: Arc<UnsafeCell<FunctionStorage>>,
-    /// The index of this `Function` in its `FunctionStorage`
-    index: usize,
-}
+pub struct Function<'a> (&'a [Term]);
 
-impl Function {
-
-    /// Returns the body of `Term`s composing this function
-    pub fn body(&self) -> &[Term] {
-        let storage: &mut FunctionStorage = unsafe { &mut *self.function_storage.get() };
-        storage.get_body(self.index)
-    }
+impl Function<'_> {
 
     /// Evaluate the `Function`
-    pub fn evaluate(&self, stack: &mut Stack) -> Result<(), String> {
-        let storage: &mut FunctionStorage = unsafe { &mut *self.function_storage.get() };
-        stack.evaluate_function_body(storage, self.body())
-            .map_err(|s| s.to_string())
+    pub fn evaluate(
+        &self,
+        function_storage: &FunctionStorage,
+        stack: &mut Stack
+    ) -> Result<(), String> {
+        for term in self.0 {
+            term.evaluate(&function_storage, stack)?;
+        }
+        Ok (())
     }
-
-    /// Create a new `Function` from a `FunctionStorage` and its index within the storage
-    pub fn new(
-        function_storage: &Arc<UnsafeCell<FunctionStorage>>,
-        index: usize
-    ) -> Self { Self {
-        function_storage: function_storage.clone(),
-        index,
-    } }
 
 }
 
 
 
 /// The index of a `Function` in a `FunctionStorage`
+#[derive(Clone, Copy, Debug)]
 pub struct FunctionIndex (usize);
-
-impl FunctionIndex {
-
-    /// Returns the `FunctionIndex` as a `usize`
-    const fn index(&self) -> usize { self.0 }
-
-    /// Creates a new `FunctionIndex`
-    const fn new(index: usize) -> Self { Self (index) }
-
-}
 
 
 
@@ -72,9 +48,9 @@ pub struct FunctionStorage {
 impl FunctionStorage {
 
     /// Gets the `&[Term]` body of a function from a `FunctionStorage`
-    pub fn get_body(&self, index: usize) -> &[Term] {
-        let range: Range<usize> = self.functions[index].clone();
-        &self.term_buffer[range]
+    pub fn get(&self, index: FunctionIndex) -> Function {
+        let range: Range<usize> = self.functions[index.0].clone();
+        Function (&self.term_buffer[range])
     }
 
     /// Create a new `FunctionStorage`
@@ -83,8 +59,14 @@ impl FunctionStorage {
         term_buffer: vec![],
     } }
 
-    /// Returns the index of the next function to be added to this `FunctionStorage`
-    pub const fn next_index(&self) -> FunctionIndex { FunctionIndex::new(self.functions.len()) }
+    /// Reserves a place to store a function with a given length in terms
+    pub const fn reserve(&mut self, length: usize) -> FunctionIndex {
+        let start: usize = self.term_buffer.len(); // start of function in term buffer
+        let end: usize = start + length; // end of function in term buffer
+        self.functions.push(start..end);
+        self.term_buffer.reserve(length);
+        FunctionIndex (self.functions.len() - 1)
+    }
 
     /// Stores a new function in this `NamespaceStorage`, returning its index
     pub fn store_function(&mut self, body: &[Term]) -> FunctionIndex {

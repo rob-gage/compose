@@ -31,22 +31,22 @@ pub struct Stack {
 impl Stack {
 
 
-    /// Displays the top of the stack as a string
-    pub fn display_stack(&self, namespace: &Namespace) -> String {
-        const DISPLAY_COUNT: usize = 5;
-        let mut collected: Vec<String> = Vec::new();
-        for i in (0..DISPLAY_COUNT).rev() {
-            if let Some(item) = self.get_from_top(i) {
-                collected.push(item.display(&namespace));
-            }
-        }
-        let string: String = collected.join(" ");
-        if self.size() > DISPLAY_COUNT {
-            format!("... {}", string)
-        } else {
-            string
-        }
-    }
+    // /// Displays the top of the stack as a string
+    // pub fn display_stack(&self, namespace: &Namespace) -> String {
+    //     const DISPLAY_COUNT: usize = 5;
+    //     let mut collected: Vec<String> = Vec::new();
+    //     for i in (0..DISPLAY_COUNT).rev() {
+    //         if let Some(item) = self.get_from_top(i) {
+    //             collected.push(item.display(&namespace));
+    //         }
+    //     }
+    //     let string: String = collected.join(" ");
+    //     if self.size() > DISPLAY_COUNT {
+    //         format!("... {}", string)
+    //     } else {
+    //         string
+    //     }
+    // }
 
 
     /// Evaluates a `Combinator`
@@ -260,42 +260,6 @@ impl Stack {
 
             _ => Err("Combinator is not yet implemented"),
         }
-    }
-
-
-    /// Evaluates a single `Term` on this `Runtime`
-    fn evaluate_term(
-        &mut self,
-        storage: &FunctionStorage,
-        term: &Term
-    ) -> Result<(), &'static str> {
-        // println!("evaluated term: {:?}", term);
-        match term {
-            Term::Application(identifier) => {
-                let function_body: &[Term] = storage.get_body(*identifier);
-                self.evaluate_function_body(storage, function_body)
-            },
-
-            Term::Combinator(combinator) => self.evaluate_combinator(storage, combinator.clone()),
-
-            Term::Data(data) => {
-                self.push(data.clone());
-                Ok(())
-            }
-        }
-    }
-
-
-    /// Evaluates a function body represented by `&[Term]`
-    pub fn evaluate_function_body(
-        &mut self,
-        storage: &FunctionStorage,
-        body: &[Term],
-    ) -> Result<(), &'static str> {
-        for term in body {
-            self.evaluate_term(storage, term)?
-        }
-        Ok(())
     }
 
 
