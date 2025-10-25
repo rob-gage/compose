@@ -101,19 +101,3 @@ fn normalize(syntax: &str) -> String {
         .replace('\u{2029}', "\n");
     normalized
 }
-
-/// Returns the number of bytes of non-whitespace in the string
-fn preceding_non_whitespace(string: &str) -> usize {
-    string
-        .char_indices()
-        .position(|(_, c)| c.is_whitespace())
-        .unwrap_or(string.len())
-}
-
-/// Returns the number of bytes of preceding whitespace are in the string
-fn preceding_whitespace(string: &str) -> usize {
-    string
-        .char_indices()
-        .position(|(_, c)| !c.is_whitespace())
-        .unwrap_or(string.len())
-}

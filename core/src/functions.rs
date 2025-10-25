@@ -11,6 +11,38 @@ use crate::{
 };
 
 
+pub struct Function<'a> (&'a [Term]);
+
+
+
+impl Function<'_> {
+
+    pub const fn body(&self) -> &[Term] { self.0 }
+
+    pub fn evaluate(
+        &self,
+        function_storage: &FunctionStorage,
+        stack: &mut Stack
+    ) -> Result<(), String> {
+        for term in self.0 {
+            match term {
+                Term::Application (function_index) => {
+                    let function: Function = function_storage.get(*function_index);
+                    function.evaluate(function_storage, stack)?
+                },
+                Term::Combinator (combinator) => stack.evaluate_combinator(
+                    &function_storage,
+                    combinator.clone()
+                ).map_err(str::to_string)?,
+                Term::Data (data) => stack.push(data.clone()),
+            }
+        }
+        Ok (())
+    }
+
+}
+
+
 
 /// The index of a `Function` in a `FunctionStorage`
 #[derive(Clone, Copy, Debug)]
@@ -29,9 +61,9 @@ pub struct FunctionStorage {
 impl FunctionStorage {
 
     /// Gets the `&[Term]` body of a function from a `FunctionStorage`
-    pub fn get(&self, index: FunctionIndex) -> &[Term] {
+    pub fn get(&self, index: FunctionIndex) -> Function {
         let range: Range<usize> = self.functions[index.0].clone();
-        &self.term_buffer[range]
+        Function (&self.term_buffer[range])
     }
 
     /// Create a new `FunctionStorage`

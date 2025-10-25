@@ -26,33 +26,3 @@ pub enum Term {
     Data (Data),
 
 }
-
-impl Term {
-
-    /// Evaluate the `Term`
-    pub fn evaluate(
-        &self,
-        function_storage: &FunctionStorage,
-        stack: &mut Stack
-    ) -> Result<(), String> {
-        match self {
-
-            Term::Application (function_index) => {
-                let function: &[Term] = function_storage.get(*function_index);
-                function.evaluate(function_storage, stack)
-            },
-
-            Term::Combinator (combinator) => stack.evaluate_combinator(
-                &function_storage,
-                combinator.clone()
-            ).map_err(str::to_string),
-
-            Term::Data (data) => {
-                stack.push(data.clone());
-                Ok(())
-            }
-
-        }
-    }
-
-}

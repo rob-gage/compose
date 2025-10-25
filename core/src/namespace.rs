@@ -56,7 +56,7 @@ impl Namespace {
                 UnresolvedLambda (lambda_body) => {
                     let lambda: Data = Data::Lambda (match self.resolve_function("", lambda_body) {
                         Ok (lambda_index) =>
-                            self.function_storage.get(lambda_index).to_vec(),
+                            self.function_storage.get(lambda_index).body().to_vec(),
                         Err (lambda_undefined) => {
                             undefined.extend(lambda_undefined);
                             vec![]
