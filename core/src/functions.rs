@@ -45,7 +45,7 @@ impl Function<'_> {
 
 
 /// The index of a `Function` in a `FunctionStorage`
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub struct FunctionIndex (usize);
 
 

@@ -9,7 +9,7 @@ use crate::{
 };
 
 /// A concatenative programming term that can represent data or operations
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Eq, PartialEq)]
 pub enum Term {
 
     /// Application of a named function

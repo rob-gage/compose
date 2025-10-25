@@ -4,9 +4,10 @@ use crate::{
     Integer,
     Term,
 };
+use crate::data::Data::{Boolean, Lambda, List};
 
 /// Data that can be stored on the `Stack`
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub enum Data {
 
     /// A true or false value
