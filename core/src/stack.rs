@@ -20,7 +20,7 @@ use super::{
 /// How many terms on the stack are stored on the actual stack
 const STACK_STACK_SIZE: usize = 1024;
 
-/// A last-in-first-out stack that can store `Value`s and is used to evaluate programs
+/// A last-in-first-out stack that can store `Data` and is used to evaluate programs
 pub struct Stack {
     /// The buffer containing the data on the stack
     buffer: UnsafeCell<SmallVec<[Data; STACK_STACK_SIZE]>>,
@@ -320,5 +320,16 @@ impl Stack {
         self.top
     }
 
+
+}
+
+impl Clone for Stack {
+    fn clone(&self) -> Self {
+        let cloned: SmallVec<[Data; STACK_STACK_SIZE]> = unsafe { (&*self.buffer.get()).clone() };
+        Self {
+            buffer: UnsafeCell::new(cloned),
+            top: self.top,
+        }
+    }
 
 }

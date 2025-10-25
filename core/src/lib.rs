@@ -8,10 +8,12 @@ mod stack;
 mod syntax;
 mod term;
 mod functions;
+mod virtual_machine;
 
 use combinator::Combinator;
 use data::Data;
 use functions::{
+    Function,
     FunctionIndex,
     FunctionStorage,
 };
