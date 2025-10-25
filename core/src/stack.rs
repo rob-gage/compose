@@ -11,6 +11,7 @@ use std::{
 use super::{
     Combinator,
     Data,
+    Function,
     FunctionStorage,
     Integer,
     Namespace,
@@ -164,7 +165,7 @@ impl Stack {
 
             Apply => {
                 let top: Option<Data> = self.pop();
-                if let Some(Data::Lambda(lambda_body)) = top {
+                if let Some (Data::Lambda (lambda_body)) = top {
                     self.evaluate_function_body(storage, &lambda_body)?;
                     Ok(())
                 } else { Err("Stack must have a lambda on top to be applied") }

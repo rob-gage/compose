@@ -66,6 +66,8 @@ impl FunctionStorage {
         Function (&self.term_buffer[range])
     }
 
+    /// Gets a composed
+
     /// Create a new `FunctionStorage`
     pub fn new() -> Self { Self {
         functions: vec![],

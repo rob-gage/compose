@@ -1,10 +1,9 @@
 // Copyright Rob Gage 2025
 
 use crate::{
+    FunctionIndex,
     Integer,
-    Term,
 };
-use crate::data::Data::{Boolean, Lambda, List};
 
 /// Data that can be stored on the `Stack`
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -17,7 +16,7 @@ pub enum Data {
     Integer (Integer),
 
     /// An anonymous function
-    Lambda (Vec<Term>),
+    Lambda (Vec<FunctionIndex>),
 
     /// A list of `Data`
     List (Vec<Data>),
