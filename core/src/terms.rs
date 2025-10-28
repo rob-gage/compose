@@ -26,34 +26,37 @@ pub enum Term {
 /// Represents a sequence of `Term`s
 pub trait TermSequence<'a> {
 
+    type Index;
+
     /// Returns the next `Term` in this `TermSequence` if it is not empty
-    fn next(&mut self) -> Option<&'a Term>;
+    fn next(&self, index: Self::Index) -> (Option<&'a Term>, Self::Index);
 
 }
 
-impl<'a> TermSequence<'a> for (&'a [Term], usize) {
-    fn next(&mut self) -> Option<&'a Term> {
-        if let Some (output) = self.0.get(self.1) {
-            self.1 += 1;
-            Some (output)
-        } else { None }
+impl<'a> TermSequence<'a> for &'a [Term] {
+
+    type Index = usize;
+
+    fn next(&self, index: usize) -> (Option<&'a Term>, usize) {
+        if let Some (term) = self.get(index) {
+            (Some (term), index + 1)
+        } else { (None, index) }
     }
 
 }
 
-impl <'a> TermSequence<'a> for (&[&'a [Term]], usize, usize) {
-    fn next(&mut self) -> Option<&'a Term> {
-        loop {
-            let slice: &'a [Term] = self.0.get(self.1)?;
-            if let Some (term) = slice.get(self.2) {
-                self.2 += 1;
-                return Some (term);
+impl <'a> TermSequence<'a> for &[&'a [Term]] {
+
+    type Index = (usize, usize);
+
+    fn next(&self, index: (usize, usize)) -> (Option<&'a Term>, (usize, usize)) {
+        if let Some (slice) = self.get(index.0) {
+            if let Some (term) = slice.get(index.1) {
+                (Some (term), (index.0, index.1 + 1))
             } else {
-                self.1 += 1;
-                self.2 = 0;
-                continue;
+                self.next((index.0 + 1, 0))
             }
-        }
+        } else { (None, index) }
     }
 
 }
