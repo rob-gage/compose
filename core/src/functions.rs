@@ -45,7 +45,7 @@ where
                 Term::Combinator (combinator) => stack.evaluate_combinator(
                     &function_storage,
                     combinator.clone()
-                ).map_err(str::to_string)?,
+                )?,
                 Term::Data (data) => stack.push(data.clone()),
             }
             index = new_index

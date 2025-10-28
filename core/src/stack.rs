@@ -193,12 +193,16 @@ impl Stack {
 
             If => match (self.pop(), self.pop()) {
                 (
-                    Some(Data::Lambda(false_body)), Some(Data::Lambda(true_body))
+                    Some(Data::Lambda(false_indices)), Some(Data::Lambda(true_indices))
                 ) => match self.pop() {
-                    Some(Data::Boolean(boolean)) => if boolean {
-                        self.evaluate_function_body(storage, &true_body)
+                    Some(Data::Boolean (boolean)) => if boolean {
+                        let lambda: Function<'_, _> = storage.get_composed(&true_indices);
+                        lambda.evaluate(storage, self)?;
+                        Ok (())
                     } else {
-                        self.evaluate_function_body(storage, &false_body)
+                        let lambda: Function<'_, _> = storage.get_composed(&false_indices);
+                        lambda.evaluate(storage, self)?;
+                        Ok (())
                     }
                     _ => Err("Cannot perform `if` operation unless there is a boolean below \
                         the two lambdas on top of the stack".to_string())
@@ -208,8 +212,9 @@ impl Stack {
             }
 
             Under => match (self.pop(), self.pop()) {
-                (Some(Data::Lambda(lambda_body)), Some(top)) => {
-                    self.evaluate_function_body(storage, &lambda_body)?;
+                (Some(Data::Lambda (indices)), Some(top)) => {
+                    let lambda: Function<'_, _> = storage.get_composed(&indices);
+                    lambda.evaluate(storage, self)?;
                     self.push(top);
                     Ok(())
                 }
