@@ -8,7 +8,10 @@ use crate::{
 
 /// A concatenative programming term that can represent data or operations
 #[derive(Clone, Debug, Eq, PartialEq)]
-pub enum Term {
+pub enum Term
+where
+    Self: Sized
+{
 
     /// Application of a named function
     Application (FunctionIndex),
@@ -51,7 +54,7 @@ impl<'a> TermSequence<'a> for &'a [Term] {
 
 }
 
-impl <'a> TermSequence<'a> for &[&'a [Term]] {
+impl <'a> TermSequence<'a> for Vec<&'a [Term]> {
 
     type Index = (usize, usize);
 

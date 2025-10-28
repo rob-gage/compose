@@ -265,16 +265,6 @@ impl Stack {
     }
 
 
-    /// Evaluates a lambda on this stack represented as a `&[FunctionIndex]`
-    pub fn evaluate_lambda(
-        &self,
-        function_storage: FunctionStorage,
-        lambda: &[FunctionIndex]
-    ) -> Result<(), String> {
-        let lambda_body: Vec<T>
-    }
-
-
     /// Creates a new `Stack` with no data in it
     pub fn new() -> Self {
         Self {

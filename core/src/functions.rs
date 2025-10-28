@@ -80,6 +80,15 @@ impl<'a> FunctionStorage<'a> {
         Function { body: &self.term_buffer[range], _phantom: PhantomData }
     }
 
+    pub fn get_composed(&'a self, indices: &[FunctionIndex]) -> Function<'a, Vec<&'a [Term]>> {
+        Function {
+            body: indices.iter()
+                .map(|index| self.get(*index).body)
+                .collect(),
+            _phantom: PhantomData,
+        }
+    }
+
     /// Create a new `FunctionStorage`
     pub fn new() -> Self {
         Self { functions: vec![], term_buffer: vec![], _phantom: PhantomData }
