@@ -4,13 +4,7 @@ use std::collections::{
     HashMap,
     HashSet,
 };
-use crate::{
-    Data,
-    FunctionIndex,
-    FunctionStorage,
-    Term,
-    UnresolvedTerm,
-};
+use crate::{Data, Function, FunctionIndex, FunctionStorage, Stack, Term, UnresolvedFunction, UnresolvedTerm};
 
 /// Allows definition and retrieval of named functions and anonymous functions
 pub struct Namespace<'a> {
@@ -20,7 +14,23 @@ pub struct Namespace<'a> {
     functions_by_name: HashMap<String, FunctionIndex>,
 }
 
-impl Namespace<'_> {
+impl<'a> Namespace<'a> {
+
+    /// Defines a new named function in this `Namespace`
+    pub fn define(
+        &'a mut self,
+        function: UnresolvedFunction
+    ) -> Result<Function<'a, &'a [Term]>, HashSet<String>> {
+        self.resolve_function(function.name(), function.body())
+            .map(|index| self.function_storage.get(index))
+    }
+
+    /// Evaluates a `Function` on a `Stack`
+    pub fn evaluate(
+        &self,
+        stack: &mut Stack,
+        function: Function<'a, &'a [Term]>
+    ) -> Result<(), String> { function.evaluate(&self.function_storage, stack) }
 
     /// Creates a new `Namespace`
     pub fn new() -> Self {
@@ -31,7 +41,7 @@ impl Namespace<'_> {
     }
 
     /// Resolves a function, stores it in the `Namespace` and returns it's `FunctionIndex`
-    pub fn resolve_function(
+    fn resolve_function(
         &mut self,
         name: &str,
         body: &[UnresolvedTerm]
@@ -73,6 +83,7 @@ impl Namespace<'_> {
             Err (undefined)
         }
     }
+
 
 }
 

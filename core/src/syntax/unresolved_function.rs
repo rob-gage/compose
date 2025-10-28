@@ -17,6 +17,12 @@ pub struct UnresolvedFunction {
 
 impl UnresolvedFunction {
 
+    /// Returns the `UnresolvedTerm`s making up the body of this `UnresolvedFunction`
+    pub fn body(&self) -> &[UnresolvedTerm] { &self.body }
+
+    /// Returns the name of this `UnresolvedFunction`
+    pub fn name(&self) -> &str { &self.name }
+
     /// Parses an `UnresolvedFunction` from text
     pub fn parse(input: &Text) -> ParseResult<Self> {
         terminated(unicode_identifier(), whitespace().or_not())

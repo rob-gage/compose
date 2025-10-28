@@ -8,7 +8,6 @@ mod stack;
 mod syntax;
 mod terms;
 mod functions;
-mod virtual_machine;
 
 use combinator::Combinator;
 use data::Data;

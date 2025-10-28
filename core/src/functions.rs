@@ -64,6 +64,7 @@ pub struct FunctionIndex (usize);
 
 
 /// Stores resolved function definitions
+#[derive(Clone)]
 pub struct FunctionStorage<'a> {
     /// The functions in this `FunctionStorage`represented by their range in the term buffer
     functions: Vec<Range<usize>>,
