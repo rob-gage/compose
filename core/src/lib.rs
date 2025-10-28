@@ -23,7 +23,10 @@ use syntax::{
     UnresolvedFunction,
     UnresolvedTerm,
 };
-use terms::Term;
+use terms::{
+    Term,
+    TermSequence,
+};
 
 pub use namespace::Namespace;
 pub use stack::Stack;

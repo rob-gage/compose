@@ -4,27 +4,31 @@ use crate::{
     Function,
     FunctionStorage,
     Stack,
+    TermSequence,
 };
 use std::sync::Arc;
 
 /// A virtual machine that can handle evaluation of functions
 #[derive(Clone)]
-pub struct VirtualMachine {
+pub struct VirtualMachine<'a> {
     /// The `FunctionStorage` used to store functions used by this `VirtualMachine`
-    function_storage: Arc<FunctionStorage>,
+    function_storage: Arc<FunctionStorage<'a>>,
     /// The `Stack` used by this `VirtualMachine` for evaluation
     stack: Stack
 }
 
-impl VirtualMachine {
+impl<'a> VirtualMachine<'a> {
 
     /// Evaluates a `Function` using this `VirtualMachine`
-    pub fn evaluate(&mut self, function: Function) -> Result<(), String> {
+    pub fn evaluate<TS>(&'a mut self, function: Function<'a, TS>) -> Result<(), String>
+    where
+        TS: TermSequence<'a>
+    {
         function.evaluate(&self.function_storage, &mut self.stack)
     }
 
     /// Creates a new `VirtualMachine` from an `FunctionStorage`
-    pub fn from_function_storage(function_storage: FunctionStorage) -> Self {
+    pub fn from_function_storage(function_storage: FunctionStorage<'a>) -> Self {
         Self {
             function_storage: Arc::new(function_storage),
             stack: Stack::new(),

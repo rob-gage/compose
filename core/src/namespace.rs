@@ -13,14 +13,14 @@ use crate::{
 };
 
 /// Allows definition and retrieval of named functions and anonymous functions
-pub struct Namespace {
+pub struct Namespace<'a> {
     /// The function storage used to store functions defined in this namespace
-    function_storage: FunctionStorage,
+    function_storage: FunctionStorage<'a>,
     /// The indices of defined functions in the function storage mapped by name
     functions_by_name: HashMap<String, FunctionIndex>,
 }
 
-impl Namespace {
+impl Namespace<'_> {
 
     /// Creates a new `Namespace`
     pub fn new() -> Self {

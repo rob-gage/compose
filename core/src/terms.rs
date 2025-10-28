@@ -26,7 +26,11 @@ pub enum Term {
 /// Represents a sequence of `Term`s
 pub trait TermSequence<'a> {
 
-    type Index;
+    /// The type used to represent positions of `Term`s within the `TermSequence`
+    type Index: Clone + Copy;
+
+    /// The start index used for the implementor
+    const START: Self::Index;
 
     /// Returns the next `Term` in this `TermSequence` if it is not empty
     fn next(&self, index: Self::Index) -> (Option<&'a Term>, Self::Index);
@@ -36,6 +40,8 @@ pub trait TermSequence<'a> {
 impl<'a> TermSequence<'a> for &'a [Term] {
 
     type Index = usize;
+
+    const START: Self::Index = 0;
 
     fn next(&self, index: usize) -> (Option<&'a Term>, usize) {
         if let Some (term) = self.get(index) {
@@ -48,6 +54,8 @@ impl<'a> TermSequence<'a> for &'a [Term] {
 impl <'a> TermSequence<'a> for &[&'a [Term]] {
 
     type Index = (usize, usize);
+
+    const START: Self::Index = (0, 0);
 
     fn next(&self, index: (usize, usize)) -> (Option<&'a Term>, (usize, usize)) {
         if let Some (slice) = self.get(index.0) {

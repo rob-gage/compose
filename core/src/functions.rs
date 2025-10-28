@@ -1,33 +1,45 @@
 // Copyright Rob Gage 2025
 
-use std::{
-    cell::UnsafeCell,
-    ops::Range,
-    sync::Arc,
-};
+
 use crate::{
     Stack,
     Term,
+    TermSequence,
+};
+use std::{
+    marker::PhantomData,
+    ops::Range,
 };
 
 
-pub struct Function<'a> (&'a [Term]);
+/// A function that can be evaluated on a `VirtualMachine`
+pub struct Function<'a, TS>
+where
+    TS: TermSequence<'a>
+{
+    /// The terms making up the function body
+    body: TS,
+    _phantom: PhantomData<&'a ()>,
+}
 
 
 
-impl Function<'_> {
-
-    pub const fn body(&self) -> &[Term] { self.0 }
+impl<'a, TS> Function<'a, TS>
+where
+    TS: TermSequence<'a>
+{
 
     pub fn evaluate(
         &self,
-        function_storage: &FunctionStorage,
+        function_storage: &'a FunctionStorage,
         stack: &mut Stack
     ) -> Result<(), String> {
-        for term in self.0 {
+        let mut index: TS::Index = TS::START;
+        loop {
+            let (Some (term), new_index) = self.body.next(index) else { break };
             match term {
                 Term::Application (function_index) => {
-                    let function: Function = function_storage.get(*function_index);
+                    let function: Function<'a, &'a [Term]> = function_storage.get(*function_index);
                     function.evaluate(function_storage, stack)?
                 },
                 Term::Combinator (combinator) => stack.evaluate_combinator(
@@ -36,6 +48,7 @@ impl Function<'_> {
                 ).map_err(str::to_string)?,
                 Term::Data (data) => stack.push(data.clone()),
             }
+            index = new_index
         }
         Ok (())
     }
@@ -51,28 +64,26 @@ pub struct FunctionIndex (usize);
 
 
 /// Stores resolved function definitions
-pub struct FunctionStorage {
+pub struct FunctionStorage<'a> {
     /// The functions in this `FunctionStorage`represented by their range in the term buffer
     functions: Vec<Range<usize>>,
     /// The buffer storing the terms composing the bodies of these functions
     term_buffer: Vec<Term>,
+    _phantom: PhantomData<&'a ()>,
 }
 
-impl FunctionStorage {
+impl<'a> FunctionStorage<'a> {
 
     /// Gets the `&[Term]` body of a function from a `FunctionStorage`
-    pub fn get(&self, index: FunctionIndex) -> Function {
+    pub fn get(&'a self, index: FunctionIndex) -> Function<'a, &'a [Term]> {
         let range: Range<usize> = self.functions[index.0].clone();
-        Function (&self.term_buffer[range])
+        Function { body: &self.term_buffer[range], _phantom: PhantomData }
     }
 
-    /// Gets a composed
-
     /// Create a new `FunctionStorage`
-    pub fn new() -> Self { Self {
-        functions: vec![],
-        term_buffer: vec![],
-    } }
+    pub fn new() -> Self {
+        Self { functions: vec![], term_buffer: vec![], _phantom: PhantomData }
+    }
 
     /// Reserves a place to store a function with a given length in terms
     pub fn reserve(&mut self, length: usize) -> FunctionIndex {
