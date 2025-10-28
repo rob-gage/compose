@@ -8,6 +8,7 @@ use std::{
     cell::UnsafeCell,
     mem::swap,
 };
+use crate::functions::FunctionIndex;
 use super::{
     Combinator,
     Data,
@@ -261,6 +262,16 @@ impl Stack {
 
             _ => Err("Combinator is not yet implemented"),
         }
+    }
+
+
+    /// Evaluates a lambda on this stack represented as a `&[FunctionIndex]`
+    pub fn evaluate_lambda(
+        &self,
+        function_storage: FunctionStorage,
+        lambda: &[FunctionIndex]
+    ) -> Result<(), String> {
+        let lambda_body: Vec<T>
     }
 
 

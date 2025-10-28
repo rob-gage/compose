@@ -6,7 +6,7 @@ mod integer;
 mod namespace;
 mod stack;
 mod syntax;
-mod term;
+mod terms;
 mod functions;
 mod virtual_machine;
 
@@ -23,7 +23,7 @@ use syntax::{
     UnresolvedFunction,
     UnresolvedTerm,
 };
-use term::Term;
+use terms::Term;
 
 pub use namespace::Namespace;
 pub use stack::Stack;
