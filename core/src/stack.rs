@@ -8,15 +8,15 @@ use std::{
     cell::UnsafeCell,
     mem::swap,
 };
-use crate::functions::FunctionIndex;
 use super::{
     Combinator,
     Data,
-    Function,
-    FunctionStorage,
     Integer,
     Namespace,
     Term,
+    TermBuffer,
+    TermSequence,
+    TermSequenceReference,
 };
 
 /// How many terms on the stack are stored on the actual stack

@@ -1,8 +1,8 @@
 // Copyright Rob Gage 2025
 
 use crate::{
-    FunctionIndex,
     Integer,
+    TermSequenceReference
 };
 
 /// Data that can be stored on the `Stack`
@@ -16,7 +16,7 @@ pub enum Data {
     Integer (Integer),
 
     /// An anonymous function
-    Lambda (Vec<FunctionIndex>),
+    Lambda (Vec<TermSequenceReference>),
 
     /// A list of `Data`
     List (Vec<Data>),

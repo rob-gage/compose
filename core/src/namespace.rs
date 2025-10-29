@@ -4,38 +4,47 @@ use std::collections::{
     HashMap,
     HashSet,
 };
-use crate::{Data, Function, FunctionIndex, FunctionStorage, Stack, Term, UnresolvedFunction, UnresolvedTerm};
+use crate::{
+    Data,
+    Stack,
+    Term,
+    TermBuffer,
+    TermSequence,
+    TermSequenceReference,
+    UnresolvedFunction,
+    UnresolvedTerm
+};
 
 /// Allows definition and retrieval of named functions and anonymous functions
-pub struct Namespace<'a> {
-    /// The function storage used to store functions defined in this namespace
-    function_storage: FunctionStorage<'a>,
+pub struct Namespace {
+    /// The `TermBuffer` used to store functions in this namespace
+    term_buffer: TermBuffer,
     /// The indices of defined functions in the function storage mapped by name
-    functions_by_name: HashMap<String, FunctionIndex>,
+    functions_by_name: HashMap<String, TermSequenceReference>,
 }
 
-impl<'a> Namespace<'a> {
+impl Namespace {
 
     /// Defines a new named function in this `Namespace`
     pub fn define(
-        &'a mut self,
+        &mut self,
         function: UnresolvedFunction
-    ) -> Result<Function<'a, &'a [Term]>, HashSet<String>> {
+    ) -> Result<TermSequence, HashSet<String>> {
         self.resolve_function(function.name(), function.body())
-            .map(|index| self.function_storage.get(index))
+            .map(|index| self.term_buffer.get(index))
     }
 
-    /// Evaluates a `Function` on a `Stack`
-    pub fn evaluate(
+    /// Evaluates a `TermSequence` on a `Stack`
+    pub fn evaluate_terms(
         &self,
         stack: &mut Stack,
-        function: Function<'a, &'a [Term]>
-    ) -> Result<(), String> { function.evaluate(&self.function_storage, stack) }
+        terms: TermSequence
+    ) -> Result<(), String> { terms.evaluate(&self.term_buffer, stack) }
 
     /// Creates a new `Namespace`
     pub fn new() -> Self {
         Self {
-            function_storage: FunctionStorage::new(),
+            term_buffer: TermBuffer::new(),
             functions_by_name: HashMap::new(),
         }
     }
@@ -45,10 +54,10 @@ impl<'a> Namespace<'a> {
         &mut self,
         name: &str,
         body: &[UnresolvedTerm]
-    ) -> Result<FunctionIndex, HashSet<String>> {
+    ) -> Result<TermSequenceReference, HashSet<String>> {
         use UnresolvedTerm::*;
-        let reserved_index: FunctionIndex = self.function_storage.reserve(body.len());
-        self.functions_by_name.insert(name.to_string(), reserved_index);
+        let reserved: TermSequenceReference = self.term_buffer.reserve(body.len());
+        self.functions_by_name.insert(name.to_string(), reserved);
         let mut resolved: Vec<Term> = Vec::with_capacity(body.len());
         let mut undefined: HashSet<String> = HashSet::new();
         for unresolved_term in body {
@@ -60,7 +69,7 @@ impl<'a> Namespace<'a> {
                     if let Some (function_index) = self.functions_by_name.get(unresolved_name) {
                         resolved.push(Term::Application (*function_index));
                     } else if unresolved_name == name  {
-                        resolved.push(Term::Application (reserved_index));
+                        resolved.push(Term::Application (reserved));
                     } else { undefined.insert(name.to_string()); },
                 // resolve lambdas
                 UnresolvedLambda (lambda_body) => {
@@ -76,8 +85,8 @@ impl<'a> Namespace<'a> {
             }
         }
         if undefined.is_empty() {
-            self.function_storage.store(reserved_index, &resolved);
-            Ok (reserved_index)
+            self.term_buffer.store(reserved, &resolved);
+            Ok (reserved)
         } else {
             self.functions_by_name.remove(name);
             Err (undefined)

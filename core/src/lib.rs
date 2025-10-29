@@ -7,15 +7,9 @@ mod namespace;
 mod stack;
 mod syntax;
 mod terms;
-mod functions;
 
 use combinator::Combinator;
 use data::Data;
-use functions::{
-    Function,
-    FunctionIndex,
-    FunctionStorage,
-};
 use integer::Integer;
 use syntax::{
     SyntaxError,
@@ -24,7 +18,9 @@ use syntax::{
 };
 use terms::{
     Term,
+    TermBuffer,
     TermSequence,
+    TermSequenceReference,
 };
 
 pub use namespace::Namespace;

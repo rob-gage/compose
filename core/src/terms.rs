@@ -1,9 +1,9 @@
 // Copyright Rob Gage 2025
 
-use crate::{
-    Combinator,
-    Data,
-    FunctionIndex,
+use crate::{Combinator, Data, Stack};
+use std::{
+    iter::repeat,
+    marker::PhantomData,
 };
 
 /// A concatenative programming term that can represent data or operations
@@ -14,7 +14,7 @@ where
 {
 
     /// Application of a named function
-    Application (FunctionIndex),
+    Application (TermSequenceReference),
 
     /// A combinator that performs an operation on the stack
     Combinator (Combinator),
@@ -26,48 +26,82 @@ where
 
 
 
-/// Represents a sequence of `Term`s
-pub trait TermSequence<'a> {
+/// A buffer that stores `Term`s
+pub struct TermBuffer (Vec<Term>);
 
-    /// The type used to represent positions of `Term`s within the `TermSequence`
-    type Index: Clone + Copy;
+impl TermBuffer {
 
-    /// The start index used for the implementor
-    const START: Self::Index;
+    /// Gets a slice of `Term`s from this `TermBuffer`
+    pub fn get(&self, index: TermSequenceReference) -> TermSequence
+    { TermSequence::Borrowed (&self.0[index.0..index.1]) }
 
-    /// Returns the next `Term` in this `TermSequence` if it is not empty
-    fn next(&self, index: Self::Index) -> (Option<&'a Term>, Self::Index);
-
-}
-
-impl<'a> TermSequence<'a> for &'a [Term] {
-
-    type Index = usize;
-
-    const START: Self::Index = 0;
-
-    fn next(&self, index: usize) -> (Option<&'a Term>, usize) {
-        if let Some (term) = self.get(index) {
-            (Some (term), index + 1)
-        } else { (None, index) }
+    /// Gets a slice of `Term`s composed of multiple `TermBufferIndex`s
+    pub fn get_composed(&self, indices: &[TermSequenceReference]) -> TermSequence {
+        let mut terms: Vec<Term> = Vec::new();
+        for index in indices {
+            let sequence: TermSequence = self.get(*index);
+            terms.extend_from_slice(sequence.terms());
+        }
+        TermSequence::Owned (terms)
     }
 
+    /// Creates a new `TermBuffer`
+    pub const fn new() -> Self { Self (Vec::new()) }
+
+    /// Reserves space for a sequence of terms with a given length
+    pub fn reserve(&mut self, length: usize) -> TermSequenceReference {
+        let start: usize = self.0.len();
+        self.0.extend(repeat(Term::Application (TermSequenceReference(0, 0))).take(length));
+        let end: usize = self.0.len();
+        TermSequenceReference (start, end)
+    }
+
+    /// Stores a slice of `Term`s in this `TermBuffer` at a given `TermBufferIndex`
+    pub fn store(&mut self, index: TermSequenceReference, terms: &[Term])
+    { self.0.splice(index.0..index.1, terms.iter().cloned()); }
+
 }
 
-impl <'a> TermSequence<'a> for Vec<&'a [Term]> {
 
-    type Index = (usize, usize);
 
-    const START: Self::Index = (0, 0);
+/// An index to a `TermSequence` inside a `TermBuffer`
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub struct TermSequenceReference (usize, usize);
 
-    fn next(&self, index: (usize, usize)) -> (Option<&'a Term>, (usize, usize)) {
-        if let Some (slice) = self.get(index.0) {
-            if let Some (term) = slice.get(index.1) {
-                (Some (term), (index.0, index.1 + 1))
-            } else {
-                self.next((index.0 + 1, 0))
+
+
+/// A sequence of `Term`s
+pub enum TermSequence<'a> {
+    Borrowed (&'a [Term]),
+    Owned (Vec<Term>),
+}
+
+impl<'a> TermSequence<'a> {
+
+    /// Returns the `Term`s making up this `TermSequence` as a slice
+    pub fn terms(&'a self) -> &'a [Term] {
+        match self {
+            TermSequence::Borrowed (slice) => slice,
+            TermSequence::Owned (slice) => slice,
+        }
+    }
+
+    /// Evaluates this `TermSequence` on a `Stack` with a `TermBuffer` for context
+    pub fn evaluate(&self, term_buffer: &TermBuffer, stack: &mut Stack) -> Result<(), String> {
+        for term in self.terms() {
+            match term {
+                Term::Application (function_index) => {
+                    let terms: Self = term_buffer.get(*function_index);
+                    terms.evaluate(term_buffer, stack)?
+                },
+                Term::Combinator (combinator) => stack.evaluate_combinator(
+                    &term_buffer,
+                    combinator.clone()
+                )?,
+                Term::Data (data) => stack.push(data.clone()),
             }
-        } else { (None, index) }
+        }
+        Ok (())
     }
 
 }
