@@ -54,7 +54,7 @@ impl Stack {
     /// Evaluates a `Combinator`
     pub fn evaluate_combinator(
         &mut self,
-        storage: &FunctionStorage,
+        term_buffer: &TermBuffer,
         combinator: Combinator
     ) -> Result<(), String> {
         use Combinator::*;
@@ -168,8 +168,8 @@ impl Stack {
             Apply => {
                 let top: Option<Data> = self.pop();
                 if let Some (Data::Lambda (indices)) = top {
-                    let lambda: Function<'_, _> = storage.get_composed(&indices);
-                    lambda.evaluate(storage, self)?;
+                    let lambda: TermSequence = term_buffer.get_composed(&indices);
+                    lambda.evaluate(term_buffer, self)?;
                     Ok(())
                 } else { Err("Stack must have a lambda on top to be applied".to_string()) }
             },
@@ -196,12 +196,12 @@ impl Stack {
                     Some(Data::Lambda(false_indices)), Some(Data::Lambda(true_indices))
                 ) => match self.pop() {
                     Some(Data::Boolean (boolean)) => if boolean {
-                        let lambda: Function<'_, _> = storage.get_composed(&true_indices);
-                        lambda.evaluate(storage, self)?;
+                        let lambda: TermSequence = term_buffer.get_composed(&true_indices);
+                        lambda.evaluate(term_buffer, self)?;
                         Ok (())
                     } else {
-                        let lambda: Function<'_, _> = storage.get_composed(&false_indices);
-                        lambda.evaluate(storage, self)?;
+                        let lambda: TermSequence = term_buffer.get_composed(&false_indices);
+                        lambda.evaluate(term_buffer, self)?;
                         Ok (())
                     }
                     _ => Err("Cannot perform `if` operation unless there is a boolean below \
@@ -213,8 +213,8 @@ impl Stack {
 
             Under => match (self.pop(), self.pop()) {
                 (Some(Data::Lambda (indices)), Some(top)) => {
-                    let lambda: Function<'_, _> = storage.get_composed(&indices);
-                    lambda.evaluate(storage, self)?;
+                    let lambda: TermSequence = term_buffer.get_composed(&indices);
+                    lambda.evaluate(term_buffer, self)?;
                     self.push(top);
                     Ok(())
                 }

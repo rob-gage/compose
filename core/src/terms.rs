@@ -76,10 +76,10 @@ pub enum TermSequence<'a> {
     Owned (Vec<Term>),
 }
 
-impl<'a> TermSequence<'a> {
+impl TermSequence<'_> {
 
     /// Returns the `Term`s making up this `TermSequence` as a slice
-    pub fn terms(&'a self) -> &'a [Term] {
+    pub fn terms(&self) -> &[Term] {
         match self {
             TermSequence::Borrowed (slice) => slice,
             TermSequence::Owned (slice) => slice,
@@ -91,7 +91,7 @@ impl<'a> TermSequence<'a> {
         for term in self.terms() {
             match term {
                 Term::Application (function_index) => {
-                    let terms: Self = term_buffer.get(*function_index);
+                    let terms: TermSequence = term_buffer.get(*function_index);
                     terms.evaluate(term_buffer, stack)?
                 },
                 Term::Combinator (combinator) => stack.evaluate_combinator(
