@@ -11,11 +11,7 @@ mod terms;
 use combinator::Combinator;
 use data::Data;
 use integer::Integer;
-use syntax::{
-    SyntaxError,
-    UnresolvedFunction,
-    UnresolvedTerm,
-};
+use syntax::SyntaxError;
 use terms::{
     Term,
     TermBuffer,
@@ -25,3 +21,7 @@ use terms::{
 
 pub use namespace::Namespace;
 pub use stack::Stack;
+pub use syntax::{
+    UnresolvedFunction,
+    UnresolvedTerm
+};

@@ -27,13 +27,16 @@ where
 
 
 /// A buffer that stores `Term`s
-pub struct TermBuffer (Vec<Term>);
+pub struct TermBuffer<'a> {
+    terms: Vec<Term>,
+    _phantom: PhantomData<&'a ()>
+}
 
-impl TermBuffer {
+impl<'a> TermBuffer<'a> {
 
     /// Gets a slice of `Term`s from this `TermBuffer`
     pub fn get(&self, index: TermSequenceReference) -> TermSequence
-    { TermSequence::Borrowed (&self.0[index.0..index.1]) }
+    { TermSequence::Borrowed (&self.terms[index.0..index.1]) }
 
     /// Gets a slice of `Term`s composed of multiple `TermBufferIndex`s
     pub fn get_composed(&self, indices: &[TermSequenceReference]) -> TermSequence {
@@ -46,19 +49,19 @@ impl TermBuffer {
     }
 
     /// Creates a new `TermBuffer`
-    pub const fn new() -> Self { Self (Vec::new()) }
+    pub const fn new() -> Self { Self { terms: Vec::new(), _phantom: PhantomData } }
 
     /// Reserves space for a sequence of terms with a given length
     pub fn reserve(&mut self, length: usize) -> TermSequenceReference {
-        let start: usize = self.0.len();
-        self.0.extend(repeat(Term::Application (TermSequenceReference(0, 0))).take(length));
-        let end: usize = self.0.len();
+        let start: usize = self.terms.len();
+        self.terms.extend(repeat(Term::Application (TermSequenceReference(0, 0))).take(length));
+        let end: usize = self.terms.len();
         TermSequenceReference (start, end)
     }
 
     /// Stores a slice of `Term`s in this `TermBuffer` at a given `TermBufferIndex`
     pub fn store(&mut self, index: TermSequenceReference, terms: &[Term])
-    { self.0.splice(index.0..index.1, terms.iter().cloned()); }
+    { self.terms.splice(index.0..index.1, terms.iter().cloned()); }
 
 }
 

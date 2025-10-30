@@ -16,22 +16,23 @@ use crate::{
 };
 
 /// Allows definition and retrieval of named functions and anonymous functions
-pub struct Namespace {
+pub struct Namespace<'a> {
     /// The `TermBuffer` used to store functions in this namespace
-    term_buffer: TermBuffer,
+    term_buffer: TermBuffer<'a>,
     /// The indices of defined functions in the function storage mapped by name
     functions_by_name: HashMap<String, TermSequenceReference>,
 }
 
-impl Namespace {
+impl<'a> Namespace<'a> {
 
     /// Defines a new named function in this `Namespace`
     pub fn define(
-        &mut self,
-        function: UnresolvedFunction
-    ) -> Result<TermSequence, HashSet<String>> {
-        self.resolve_function(function.name(), function.body())
-            .map(|index| self.term_buffer.get(index))
+        &'a mut self,
+        name: &str,
+        body: &[UnresolvedTerm],
+    ) -> Result<TermSequence<'a>, HashSet<String>> {
+        self.resolve(name, body)
+            .map(move |index| self.term_buffer.get(index))
     }
 
     /// Evaluates a `TermSequence` on a `Stack`
@@ -50,17 +51,17 @@ impl Namespace {
     }
 
     /// Resolves a function, stores it in the `Namespace` and returns it's `FunctionIndex`
-    fn resolve_function(
+    pub fn resolve(
         &mut self,
-        name: &str,
-        body: &[UnresolvedTerm]
+        function_name: &str,
+        terms: &[UnresolvedTerm]
     ) -> Result<TermSequenceReference, HashSet<String>> {
         use UnresolvedTerm::*;
-        let reserved: TermSequenceReference = self.term_buffer.reserve(body.len());
-        self.functions_by_name.insert(name.to_string(), reserved);
-        let mut resolved: Vec<Term> = Vec::with_capacity(body.len());
+        let reserved: TermSequenceReference = self.term_buffer.reserve(terms.len());
+        self.functions_by_name.insert(function_name.to_string(), reserved);
+        let mut resolved: Vec<Term> = Vec::with_capacity(terms.len());
         let mut undefined: HashSet<String> = HashSet::new();
-        for unresolved_term in body {
+        for unresolved_term in terms {
             match unresolved_term {
                 // nothing needs to be done with already resolved terms
                 Resolved (term) => resolved.push(term.clone()),
@@ -68,12 +69,12 @@ impl Namespace {
                 UnresolvedApplication (unresolved_name) =>
                     if let Some (function_index) = self.functions_by_name.get(unresolved_name) {
                         resolved.push(Term::Application (*function_index));
-                    } else if unresolved_name == name  {
+                    } else if unresolved_name == function_name {
                         resolved.push(Term::Application (reserved));
-                    } else { undefined.insert(name.to_string()); },
+                    } else { undefined.insert(function_name.to_string()); },
                 // resolve lambdas
                 UnresolvedLambda (lambda_body) => {
-                    let lambda: Data = Data::Lambda (match self.resolve_function("", lambda_body) {
+                    let lambda: Data = Data::Lambda (match self.resolve("", lambda_body) {
                         Ok (lambda_index) => vec![lambda_index],
                         Err (lambda_undefined) => {
                             undefined.extend(lambda_undefined);
@@ -88,7 +89,7 @@ impl Namespace {
             self.term_buffer.store(reserved, &resolved);
             Ok (reserved)
         } else {
-            self.functions_by_name.remove(name);
+            self.functions_by_name.remove(function_name);
             Err (undefined)
         }
     }
