@@ -1,9 +1,6 @@
 // Copyright Rob Gage 2025
 
-use crate::{
-    Integer,
-    TermSequenceReference
-};
+use crate::Integer;
 
 /// Data that can be stored on the `Stack`
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -16,7 +13,7 @@ pub enum Data {
     Integer (Integer),
 
     /// An anonymous function
-    Lambda (Vec<TermSequenceReference>),
+    Lambda (Vec<usize>),
 
     /// A list of `Data`
     List (Vec<Data>),

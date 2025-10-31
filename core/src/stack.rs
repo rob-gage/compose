@@ -167,7 +167,7 @@ impl Stack {
             Apply => {
                 let top: Option<Data> = self.pop();
                 if let Some (Data::Lambda (indices)) = top {
-                    let lambda: TermSequence = function_storage.get_composed(&indices);
+                    let lambda: Function<_> = Function::from_function_indices(&indices);
                     lambda.evaluate(function_storage, self)?;
                     Ok(())
                 } else { Err("Stack must have a lambda on top to be applied".to_string()) }
@@ -195,11 +195,11 @@ impl Stack {
                     Some(Data::Lambda(false_indices)), Some(Data::Lambda(true_indices))
                 ) => match self.pop() {
                     Some(Data::Boolean (boolean)) => if boolean {
-                        let lambda: TermSequence = function_storage.get_composed(&true_indices);
+                        let lambda: Function<_> = Function::from_function_indices(&true_indices);
                         lambda.evaluate(function_storage, self)?;
                         Ok (())
                     } else {
-                        let lambda: TermSequence = function_storage.get_composed(&false_indices);
+                        let lambda: Function<_> = Function::from_function_indices(&false_indices);
                         lambda.evaluate(function_storage, self)?;
                         Ok (())
                     }
@@ -212,7 +212,7 @@ impl Stack {
 
             Under => match (self.pop(), self.pop()) {
                 (Some(Data::Lambda (indices)), Some(top)) => {
-                    let lambda: TermSequence = function_storage.get_composed(&indices);
+                    let lambda: Function<_> = Function::from_function_indices(&indices);
                     lambda.evaluate(function_storage, self)?;
                     self.push(top);
                     Ok(())
