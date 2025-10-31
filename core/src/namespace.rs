@@ -26,13 +26,16 @@ impl Namespace {
 
     /// Defines a new `Function` in this `Namespace` from an `UnresolvedFunction`
     pub fn define(
-        mut self,
-        unresolved_function: UnresolvedFunction,
+        &mut self,
+        unresolved_function: &UnresolvedFunction,
     ) -> Result<Function, HashSet<String>> {
         let function_index: usize = self.resolve(unresolved_function.body())?;
         self.functions_by_name.insert(unresolved_function.name().to_string(), function_index);
         Ok (Function::from_function_index (function_index))
     }
+
+    /// Returns the `FunctionStorage` used by this `Namespace`
+    pub const fn function_storage(&self) -> &FunctionStorage { &self.function_storage }
 
     /// Creates a new `Namespace`
     pub fn new() -> Self {

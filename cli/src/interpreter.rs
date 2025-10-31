@@ -1,10 +1,11 @@
 // Copyright Rob Gage 2025
 
 use compose_core::{
+    Function,
+    FunctionStorage,
     Namespace,
     Stack,
     UnresolvedFunction,
-    UnresolvedTerm,
 };
 use pups::*;
 use rustyline::{
@@ -16,14 +17,14 @@ use rustyline::{
 use std::process::exit;
 
 /// An interpreter for the `Compose` language
-pub struct Interpreter<'a> {
+pub struct Interpreter {
     /// The `Namespace` used by this `Interpreter`
-    namespace: Namespace<'a>,
+    namespace: Namespace,
     /// The `Stack` used by this `Interpreter`
     stack: Stack,
 }
 
-impl Interpreter<'_> {
+impl Interpreter {
 
     /// Creates a new `Interpreter`
     pub fn new() -> Self { Self { namespace: Namespace::new(), stack: Stack::new() } }
@@ -52,10 +53,10 @@ impl Interpreter<'_> {
                 let input: Text = Text::from_string(input);
                 let function_result: ParseResult<UnresolvedFunction>
                     = UnresolvedFunction::parse.then_ignore(end()).parse(&input);
-                if let ParseResult::Success (function, _) = function_result {
+                if let ParseResult::Success (unresolved_function, _) = function_result {
                     // define named functions
-                    match self.namespace.define(function.name(), function.body()) {
-                        Ok (_) => println!("Defined function: {}", function.name()),
+                    match self.namespace.define(&unresolved_function) {
+                        Ok (_) => println!("Defined function: {}", unresolved_function.name()),
                         Err (missing) => {
                             println!("Function not defined. Missing required functions:\n");
                             for name in missing {
@@ -64,10 +65,10 @@ impl Interpreter<'_> {
                         }
                     };
                     return;
-                } else if let ParseResult::Success (terms, _)
-                    = UnresolvedTerm::parse_many.then_ignore(end()).parse(&input) {
-                    // attempt to resolve terms
-                    let terms = match self.namespace.define("", &terms) {
+                } else if let ParseResult::Success (unresolved_function, _)
+                    = UnresolvedFunction::parse_free_terms.then_ignore(end()).parse(&input) {
+                    // define free terms as temporary function
+                    let function: Function = match self.namespace.define(&unresolved_function) {
                         Ok (terms) => terms,
                         Err (missing) => {
                             println!("Function not defined. Missing required functions:\n");
@@ -78,7 +79,7 @@ impl Interpreter<'_> {
                         }
                     };
                     // evaluate free terms
-                    match self.namespace.evaluate_terms(&mut self.stack, terms) {
+                    match function.evaluate(self.namespace.function_storage(), &mut self.stack) {
                         Ok (_) => println!("Print stack"),
                         Err (error) => eprintln!("Error: {}", error)
                     }
