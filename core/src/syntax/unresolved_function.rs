@@ -27,7 +27,6 @@ impl UnresolvedFunction {
 
     /// Parses an `UnresolvedFunction` from text
     pub fn parse(input: &Text) -> ParseResult<Self> {
-        use UnresolvedTerm::*;
         terminated(unicode_identifier(), whitespace().or_not())
             .then(delimited(
                 token(":").then(whitespace().or_not()),
@@ -36,12 +35,23 @@ impl UnresolvedFunction {
             ))
             .map(|(name, body)| Self {
                 body: body.into_iter().map(|term| match term {
-                    UnresolvedApplication (function_name) if function_name == name =>
-                        Resolved (Term::Recursion),
+                    UnresolvedTerm::UnresolvedApplication (function_name) if function_name == name
+                    => UnresolvedTerm::Resolved (Term::Recursion),
                     other => other
                 }).collect(),
                 name: name.to_string()
             })
+            .parse(input)
+    }
+
+    /// Parses an `UnresolvedFunction` from text containing free terms
+    pub fn parse_free_terms(input: &Text) -> ParseResult<Self> {
+        delimited(
+            whitespace().or_not(),
+            UnresolvedTerm::parse_many,
+            whitespace().or_not(),
+        )
+            .map(|body| Self { body, name: String::new() })
             .parse(input)
     }
 
