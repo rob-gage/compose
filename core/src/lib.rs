@@ -2,6 +2,7 @@
 
 mod combinator;
 mod data;
+mod functions;
 mod integer;
 mod namespace;
 mod stack;
@@ -10,14 +11,14 @@ mod terms;
 
 use combinator::Combinator;
 use data::Data;
+use functions::{
+    Function,
+    FunctionStorage,
+};
 use integer::Integer;
 use syntax::SyntaxError;
-use terms::{
-    Term,
-    TermBuffer,
-    TermSequence,
-    TermSequenceReference,
-};
+use terms::Term;
+
 
 pub use namespace::Namespace;
 pub use stack::Stack;

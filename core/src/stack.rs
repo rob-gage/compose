@@ -9,14 +9,13 @@ use std::{
     mem::swap,
 };
 use super::{
+    Function,
     Combinator,
+    FunctionStorage,
     Data,
     Integer,
     Namespace,
     Term,
-    TermBuffer,
-    TermSequence,
-    TermSequenceReference,
 };
 
 /// How many terms on the stack are stored on the actual stack
@@ -54,7 +53,7 @@ impl Stack {
     /// Evaluates a `Combinator`
     pub fn evaluate_combinator(
         &mut self,
-        term_buffer: &TermBuffer,
+        function_storage: &FunctionStorage,
         combinator: Combinator
     ) -> Result<(), String> {
         use Combinator::*;
@@ -168,8 +167,8 @@ impl Stack {
             Apply => {
                 let top: Option<Data> = self.pop();
                 if let Some (Data::Lambda (indices)) = top {
-                    let lambda: TermSequence = term_buffer.get_composed(&indices);
-                    lambda.evaluate(term_buffer, self)?;
+                    let lambda: TermSequence = function_storage.get_composed(&indices);
+                    lambda.evaluate(function_storage, self)?;
                     Ok(())
                 } else { Err("Stack must have a lambda on top to be applied".to_string()) }
             },
@@ -196,12 +195,12 @@ impl Stack {
                     Some(Data::Lambda(false_indices)), Some(Data::Lambda(true_indices))
                 ) => match self.pop() {
                     Some(Data::Boolean (boolean)) => if boolean {
-                        let lambda: TermSequence = term_buffer.get_composed(&true_indices);
-                        lambda.evaluate(term_buffer, self)?;
+                        let lambda: TermSequence = function_storage.get_composed(&true_indices);
+                        lambda.evaluate(function_storage, self)?;
                         Ok (())
                     } else {
-                        let lambda: TermSequence = term_buffer.get_composed(&false_indices);
-                        lambda.evaluate(term_buffer, self)?;
+                        let lambda: TermSequence = function_storage.get_composed(&false_indices);
+                        lambda.evaluate(function_storage, self)?;
                         Ok (())
                     }
                     _ => Err("Cannot perform `if` operation unless there is a boolean below \
@@ -213,8 +212,8 @@ impl Stack {
 
             Under => match (self.pop(), self.pop()) {
                 (Some(Data::Lambda (indices)), Some(top)) => {
-                    let lambda: TermSequence = term_buffer.get_composed(&indices);
-                    lambda.evaluate(term_buffer, self)?;
+                    let lambda: TermSequence = function_storage.get_composed(&indices);
+                    lambda.evaluate(function_storage, self)?;
                     self.push(top);
                     Ok(())
                 }
