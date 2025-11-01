@@ -14,7 +14,7 @@ name = "compose_cli"
 path = "src/main.rs"
 
 [dependencies]
-clap = { version = "4.5.41", features = ["derive"] }
+clap = { version = "4.5.51", features = ["derive"] }
 compose_core = { version = "0.0.0", path = "../core" }
-pups = "0.1.12"
+pups = { version = "0.1.12", path = "../../pups/library" }
 rustyline = "17.0.0"

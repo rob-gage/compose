@@ -12,5 +12,5 @@ edition = "2021"
 [dependencies]
 codespan-reporting = "0.12.0"
 num-bigint = "0.4.6"
-pups = "0.1.12"
+pups = { version = "0.1.12", path = "../../pups/library" }
 smallvec = "1.15.1"

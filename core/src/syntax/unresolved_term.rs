@@ -39,8 +39,8 @@ impl UnresolvedTerm {
     /// Parses several whitespace-separated `UnresolvedTerms`
     pub fn parse_many(input: &Text) -> ParseResult<Vec<Self>> {
         separated(
-            Self::parse,
-            whitespace()
+            Self::parse.trace("`UnresolvedTerm` parser"),
+            whitespace().trace("`UnresolvedTerm` whitespace separator")
         )
             .parse(input)
     }
@@ -121,6 +121,7 @@ fn lambda(input: &Text) -> ParseResult<UnresolvedTerm> {
 /// Parses an integer term
 fn integer(input: &Text) -> ParseResult<UnresolvedTerm> {
     number()
+        .trace("`integer` parser function")
         .map(|number| UnresolvedTerm::Resolved (Term::Data (Data::Integer (
             Integer::from_string(number).expect("Parser will never parse an invalid integer")
         ))))

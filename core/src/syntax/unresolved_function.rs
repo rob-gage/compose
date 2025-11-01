@@ -6,7 +6,7 @@ use super::{
 };
 use pups::*;
 use crate::terms::Term;
-use crate::UnresolvedTerm::Resolved;
+use std::fmt::Debug;
 
 /// An unresolved function that is stored in a `Namespace` until resolution
 #[derive(Clone)]
@@ -53,6 +53,14 @@ impl UnresolvedFunction {
         )
             .map(|body| Self { body, name: String::new() })
             .parse(input)
+    }
+
+}
+
+impl Debug for UnresolvedFunction {
+
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        if self.name.is_empty() { f.write_str("ꟛ") } else { write!(f, "`{}`", self.name) }
     }
 
 }
