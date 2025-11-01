@@ -108,12 +108,16 @@ impl FunctionStorage  {
         self.function_bodies.remove(&index);
     }
 
-    /// Stores a `&[Term]` and returns its index as a `usize`
-    pub fn store(&mut self, function_body: &[Term]) -> usize {
-        self.function_bodies.insert(self.next_index, function_body.to_vec());
+    /// Reserves a `usize` index to store a function body
+    pub fn reserve(&mut self) -> usize {
         let index: usize = self.next_index;
         self.next_index += 1;
         index
+    }
+
+    /// Stores a `&[Term]` and returns its index as a `usize`
+    pub fn store(&mut self, index: usize, function_body: &[Term]) {
+        self.function_bodies.insert(index, function_body.to_vec());
     }
 
 }

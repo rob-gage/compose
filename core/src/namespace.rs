@@ -1,14 +1,19 @@
 // Copyright Rob Gage 2025
 
-use std::collections::{
-    HashMap,
-    HashSet,
+use std::{
+    collections::{
+        HashMap,
+        HashSet,
+    },
+    fmt::{
+        Formatter,
+        Result as FmtResult,
+    },
 };
 use crate::{
     Data,
     Function,
     FunctionStorage,
-    Stack,
     Term,
     UnresolvedFunction,
     UnresolvedTerm
@@ -29,9 +34,15 @@ impl Namespace {
         &mut self,
         unresolved_function: &UnresolvedFunction,
     ) -> Result<Function, HashSet<String>> {
-        let function_index: usize = self.resolve(unresolved_function.body())?;
+        let function_index: usize = self.function_storage.reserve();
         self.functions_by_name.insert(unresolved_function.name().to_string(), function_index);
+        self.resolve(function_index, unresolved_function.body())?;
         Ok (Function::from_function_index (function_index))
+    }
+
+    /// Displays a term within the context of this `Namespace`
+    pub fn format_term(&self, formatter: Formatter, term: Term) -> FmtResult {
+       todo!()
     }
 
     /// Returns the `FunctionStorage` used by this `Namespace`
@@ -45,12 +56,13 @@ impl Namespace {
         }
     }
 
-    /// Resolves an unresolved function body, storing it in this `Namespace`, and returning its
-    /// index in this `Namespace`'s `FunctionStorage`
+    /// Resolves an unresolved function body, and stores it in this `Namespace` at a specified
+    /// index in the `FunctionStorage`
     fn resolve(
         &mut self,
+        function_index: usize,
         unresolved_body: &[UnresolvedTerm],
-    ) -> Result<usize, HashSet<String>> {
+    ) -> Result<(), HashSet<String>> {
         use UnresolvedTerm::*;
         let mut resolved: Vec<Term> = Vec::with_capacity(unresolved_body.len());
         let mut undefined: HashSet<String> = HashSet::new();
@@ -65,8 +77,9 @@ impl Namespace {
                     } else { undefined.insert(unresolved_name.to_string()); },
                 // resolve lambdas
                 UnresolvedLambda (lambda_body) => {
-                    let lambda: Data = Data::Lambda (match self.resolve(lambda_body) {
-                        Ok (lambda_index) => vec![lambda_index],
+                    let lambda_index: usize = self.function_storage.reserve();
+                    let lambda: Data = Data::Lambda (match self.resolve(lambda_index, lambda_body) {
+                        Ok (_) => vec![lambda_index],
                         Err (lambda_undefined) => {
                             undefined.extend(lambda_undefined);
                             vec![]
@@ -77,7 +90,8 @@ impl Namespace {
             }
         }
         if undefined.is_empty() {
-            Ok (self.function_storage.store(&resolved))
+            self.function_storage.store(function_index, &resolved);
+            Ok (())
         } else { Err (undefined) }
     }
 
