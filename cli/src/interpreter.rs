@@ -83,7 +83,11 @@ impl Interpreter {
                     };
                     // evaluate free terms
                     match function.evaluate(self.namespace.function_storage(), &mut self.stack) {
-                        Ok (_) => println!("Print stack"),
+                        Ok (_) => {
+                            let mut printed_stack: String = String::new();
+                            self.stack.write_stack(&mut printed_stack, &self.namespace).unwrap();
+                            println!("\n{}\n", printed_stack);
+                        },
                         Err (error) => eprintln!("Error: {}", error)
                     }
                 } else {

@@ -6,11 +6,10 @@ use std::{
         HashSet,
     },
     fmt::{
-        Formatter,
         Result as FormatResult,
+        Write,
     },
 };
-use std::fmt::Debug;
 use crate::{
     Data,
     Function,
@@ -45,16 +44,16 @@ impl Namespace {
     }
 
     /// Displays a term within the context of this `Namespace`
-    pub fn format_term(&self, f: &mut Formatter, term: &Term) -> FormatResult {
+    pub fn write_term<W: Write>(&self, w: &mut W, term: &Term) -> FormatResult {
        match term {
-           Term::Application (function_index) => f.write_str(
+           Term::Application (function_index) => w.write_str(
                self.names_by_function.get(&function_index)
                    .expect("`Namespace::format_term` will only be called on terms that exist \
                    in this `Namespace`")
            ),
-           Term::Combinator (combinator) => f.write_str(combinator.name()),
-           Term::Data (data) => data.format(f, self),
-           Term::Recursion => f.write_str("@"),
+           Term::Combinator (combinator) => w.write_str(combinator.name()),
+           Term::Data (data) => data.write(w, self),
+           Term::Recursion => w.write_str("@"),
        }
     }
 

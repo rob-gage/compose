@@ -4,7 +4,10 @@ use crate::{
     Integer,
     Namespace,
 };
-use std::fmt::{Formatter, Result as FormatResult, Write};
+use std::fmt::{
+    Result as FormatResult,
+    Write
+};
 
 /// Data that can be stored on the `Stack`
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -27,31 +30,31 @@ pub enum Data {
 impl Data {
 
     /// Formats the data using a `Namespace`
-    pub fn format(&self, f: &mut Formatter, namespace: &Namespace) -> FormatResult {
+    pub fn write<W: Write>(&self, w: &mut W, namespace: &Namespace) -> FormatResult {
         match self {
 
-            Data::Boolean (boolean) => f.write_str(if *boolean { "true" } else { "false" }),
+            Data::Boolean (boolean) => w.write_str(if *boolean { "true" } else { "false" }),
 
-            Data::Integer (integer) => f.write_str(&integer.to_string()),
+            Data::Integer (integer) => w.write_str(&integer.to_string()),
 
             Data::Lambda (function_indices) => {
-                f.write_str("( ")?;
+                w.write_str("( ")?;
                 for function_index in function_indices {
                     for term in namespace.function_storage().get_body(*function_index) {
-                        namespace.format_term(f, term)?;
-                        f.write_char(' ')?;
+                        namespace.write_term(w, term)?;
+                        w.write_char(' ')?;
                     }
                 }
-                f.write_char(')')
+                w.write_char(')')
             },
 
             Data::List (items) => {
-                f.write_str("[ ")?;
+                w.write_str("[ ")?;
                 for item in items {
-                    item.format(f, namespace)?;
-                    f.write_char(' ')?;
+                    item.write(w, namespace)?;
+                    w.write_char(' ')?;
                 }
-                f.write_char(']')
+                w.write_char(']')
             }
 
         }
