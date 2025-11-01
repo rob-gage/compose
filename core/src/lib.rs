@@ -2,26 +2,22 @@
 
 mod combinator;
 mod data;
-mod functions;
 mod integer;
 mod namespace;
-mod stack;
 mod syntax;
 mod terms;
+mod virtual_machine;
 
 use combinator::Combinator;
 use data::Data;
 use integer::Integer;
-use syntax::{
-    SyntaxError,
-    UnresolvedTerm,
-};
+use syntax::UnresolvedTerm;
 use terms::Term;
 
-pub use functions::{
+pub use virtual_machine::function_storage::{
     Function,
     FunctionStorage,
 };
 pub use namespace::Namespace;
-pub use stack::Stack;
+pub use virtual_machine::data_stack::DataStack;
 pub use syntax::UnresolvedFunction;

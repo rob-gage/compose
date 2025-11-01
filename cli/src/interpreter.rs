@@ -4,7 +4,7 @@ use compose_core::{
     Function,
     FunctionStorage,
     Namespace,
-    Stack,
+    DataStack,
     UnresolvedFunction,
 };
 use pups::*;
@@ -21,13 +21,13 @@ pub struct Interpreter {
     /// The `Namespace` used by this `Interpreter`
     namespace: Namespace,
     /// The `Stack` used by this `Interpreter`
-    stack: Stack,
+    stack: DataStack,
 }
 
 impl Interpreter {
 
     /// Creates a new `Interpreter`
-    pub fn new() -> Self { Self { namespace: Namespace::new(), stack: Stack::new() } }
+    pub fn new() -> Self { Self { namespace: Namespace::new(), stack: DataStack::new() } }
 
     /// Runs one iteration of the main `Interpreter` loop
     fn read_evaluate_print(&mut self, editor: &mut Editor<(), DefaultHistory>) {
@@ -45,7 +45,7 @@ impl Interpreter {
                     "!reset" => {
                         println!("Resetting.");
                         self.namespace = Namespace::new();
-                        self.stack = Stack::new();
+                        self.stack = DataStack::new();
                         return;
                     }
                     _ => {}

@@ -3,7 +3,7 @@
 use crate::{
     Combinator,
     Data,
-    Stack
+    DataStack
 };
 use std::{
     iter::repeat,

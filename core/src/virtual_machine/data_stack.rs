@@ -1,5 +1,13 @@
 // Copyright Rob Gage 2025
 
+use crate::{
+    Integer,
+    Combinator,
+    Data,
+    Function,
+    FunctionStorage,
+    Namespace,
+};
 use smallvec::{
     SmallVec,
     smallvec,
@@ -12,28 +20,19 @@ use std::{
     },
     mem::swap,
 };
-use super::{
-    Function,
-    Combinator,
-    FunctionStorage,
-    Data,
-    Integer,
-    Namespace,
-    Term,
-};
 
 /// How many terms on the stack are stored on the actual stack
 const STACK_STACK_SIZE: usize = 1024;
 
 /// A last-in-first-out stack that can store `Data` and is used to evaluate programs
-pub struct Stack {
+pub struct DataStack {
     /// The buffer containing the data on the stack
     buffer: UnsafeCell<SmallVec<[Data; STACK_STACK_SIZE]>>,
     /// The size of the stack
     top: usize
 }
 
-impl Stack {
+impl DataStack {
 
     /// Displays the top of the stack as a string
     pub fn write_stack<W: Write>(&self, f: &mut W, namespace: &Namespace) -> FormatResult {
@@ -61,7 +60,7 @@ impl Stack {
 
         // helper function to perform an arithmetic operation on the stack
         fn arithmetic_operation(
-            stack: &mut Stack,
+            stack: &mut DataStack,
             operation: fn(Integer, Integer) -> Integer
         ) -> Result<(), String> {
             if stack.size() < 2 {
@@ -83,7 +82,7 @@ impl Stack {
 
         // helper function to perform a boolean logic operation on the stack
         fn boolean_logic_operation(
-            stack: &mut Stack,
+            stack: &mut DataStack,
             operation: fn(bool, bool) -> bool,
         ) -> Result<(), String> {
             if stack.size() < 2 {
@@ -106,7 +105,7 @@ impl Stack {
 
         // helper function to perform a comparison operation on the stack
         fn comparison_operation(
-            stack: &mut Stack,
+            stack: &mut DataStack,
             operation: fn(Data, Data) -> Result<bool, &'static str>,
         ) -> Result<(), String> {
             if stack.size() < 2 {
@@ -332,7 +331,7 @@ impl Stack {
 
 }
 
-impl Clone for Stack {
+impl Clone for DataStack {
     fn clone(&self) -> Self {
         let cloned: SmallVec<[Data; STACK_STACK_SIZE]> = unsafe { (&*self.buffer.get()).clone() };
         Self {

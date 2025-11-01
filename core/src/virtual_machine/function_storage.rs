@@ -1,7 +1,7 @@
 // Copyright Rob Gage 2025
 
 use crate::{
-    Stack,
+    DataStack,
     Term
 };
 use std::collections::HashMap;
@@ -14,7 +14,7 @@ impl<T> Function<T> {
     /// Helper method to evaluate the `Term`s in a `Function`
     fn evaluate_terms(
         function_storage: &FunctionStorage,
-        stack: &mut Stack,
+        stack: &mut DataStack,
         terms: &[Term],
     ) -> Result<(), String> {
         for term in terms {
@@ -42,7 +42,7 @@ impl Function<usize> {
     pub fn evaluate(
         &self,
         function_storage: &FunctionStorage,
-        stack: &mut Stack
+        stack: &mut DataStack
     ) -> Result<(), String> {
         let terms: &[Term] = function_storage.get_body(self.0);
         Self::evaluate_terms(function_storage, stack, terms)?;
@@ -60,7 +60,7 @@ impl Function<Vec<usize>> {
     pub fn evaluate(
         &self,
         function_storage: &FunctionStorage,
-        stack: &mut Stack
+        stack: &mut DataStack
     ) -> Result<(), String> {
         for index in self.0.iter() {
             let terms: &[Term] = function_storage.get_body(*index);
