@@ -51,25 +51,24 @@ impl Interpreter {
                     _ => {}
                 };
                 let input: Text = Text::from_string(input);
-                // let function_result: ParseResult<UnresolvedFunction>
-                //     = UnresolvedFunction::parse.then_ignore(end()).parse(&input);
-                // if let ParseResult::Success (unresolved_function, _) = function_result {
-                //     // define named functions
-                //     match self.namespace.define(&unresolved_function) {
-                //         Ok (_) => println!("Defined function: {}", unresolved_function.name()),
-                //         Err (missing) => {
-                //             println!("Function not defined. Missing required functions:\n");
-                //             for name in missing {
-                //                 println!("  {}", name);
-                //             }
-                //         }
-                //     };
-                //     return;
-                // } else
-                let function_result: ParseResult<UnresolvedFunction>
-                    = UnresolvedFunction::parse_free_terms.trace("Free term parser")
-                    .then_ignore(end().trace("End of input parser")).parse(&input);
-                if let ParseResult::Success (unresolved_function, _) = function_result {
+                let result: ParseResult<_, _, _> =
+                    UnresolvedFunction::parse.then_ignore(end()).parse(&input);
+                if let ParseResult::Success (unresolved_function, _) = result
+                     {
+                    // define named functions
+                    match self.namespace.define(&unresolved_function) {
+                        Ok (_) => println!("Defined function: {}", unresolved_function.name()),
+                        Err (missing) => {
+                            println!("Function not defined. Missing required functions:\n");
+                            for name in missing {
+                                println!("  {}", name);
+                            }
+                        }
+                    };
+                    return;
+                } else if let ParseResult::Success (unresolved_function, _) =
+                    UnresolvedFunction::parse_free_terms.trace("Free term parser")
+                        .then_ignore(end().trace("End of input parser")).parse(&input) {
                     // define free terms as temporary function
                     let function: Function = match self.namespace.define(&unresolved_function) {
                         Ok (terms) => terms,

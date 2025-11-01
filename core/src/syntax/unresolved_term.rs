@@ -71,7 +71,7 @@ fn combinator(input: &Text) -> ParseResult<UnresolvedTerm> {
     use Combinator::*;
     fn combinator_parser<'a>(
         combinator: Combinator
-    ) -> impl Parser<'a, UnresolvedTerm, (), (), Text<'a>> {
+    ) -> impl Parser<'a, UnresolvedTerm, (), (), Text> {
         token(combinator.name()).emit(UnresolvedTerm::Resolved (Term::Combinator (combinator)))
     }
     choice([
