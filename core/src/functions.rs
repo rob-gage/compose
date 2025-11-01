@@ -89,7 +89,7 @@ pub struct FunctionStorage {
 impl FunctionStorage  {
 
     /// Gets the body of a `Function` with a given `usize` index as `Term`s
-    fn get_body(&self, index: usize) -> &[Term] {
+    pub fn get_body(&self, index: usize) -> &[Term] {
         &self.function_bodies.get(&index)
             .expect("`Function` was originally from this `FunctionStorage` and not another, and \
             was never removed")
