@@ -1,7 +1,7 @@
 // Copyright Rob Gage 2025
 
 use compose_core::{
-    Function,
+    FunctionReference,
     FunctionStorage,
     Namespace,
     DataStack,
@@ -70,7 +70,7 @@ impl Interpreter {
                     UnresolvedFunction::parse_free_terms.trace("Free term parser")
                         .then_ignore(end().trace("End of input parser")).parse(&input) {
                     // define free terms as temporary function
-                    let function: Function = match self.namespace.define(&unresolved_function) {
+                    let function: FunctionReference = match self.namespace.define(&unresolved_function) {
                         Ok (terms) => terms,
                         Err (missing) => {
                             println!("Function not defined. Missing required functions:\n");

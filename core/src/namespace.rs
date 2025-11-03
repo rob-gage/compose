@@ -12,7 +12,7 @@ use std::{
 };
 use crate::{
     Data,
-    Function,
+    FunctionReference,
     FunctionStorage,
     Term,
     UnresolvedFunction,
@@ -35,12 +35,12 @@ impl Namespace {
     pub fn define(
         &mut self,
         unresolved_function: &UnresolvedFunction,
-    ) -> Result<Function, HashSet<String>> {
+    ) -> Result<FunctionReference, HashSet<String>> {
         let function_index: usize = self.function_storage.reserve();
         self.functions_by_name.insert(unresolved_function.name().to_string(), function_index);
         self.names_by_function.insert(function_index, unresolved_function.name().to_string());
         self.resolve(function_index, unresolved_function.body())?;
-        Ok (Function::from_function_index (function_index))
+        Ok (FunctionReference::from_function_index (function_index))
     }
 
     /// Displays a term within the context of this `Namespace`

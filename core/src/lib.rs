@@ -5,17 +5,16 @@ mod data;
 mod integer;
 mod namespace;
 mod syntax;
-mod terms;
 mod virtual_machine;
 
 use combinator::Combinator;
 use data::Data;
 use integer::Integer;
 use syntax::UnresolvedTerm;
-use terms::Term;
+use virtual_machine::terms::Term;
 
 pub use virtual_machine::function_storage::{
-    Function,
+    FunctionReference,
     FunctionStorage,
 };
 pub use namespace::Namespace;

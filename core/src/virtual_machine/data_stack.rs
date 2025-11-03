@@ -4,7 +4,7 @@ use crate::{
     Integer,
     Combinator,
     Data,
-    Function,
+    FunctionReference,
     FunctionStorage,
     Namespace,
 };
@@ -167,7 +167,7 @@ impl DataStack {
             Apply => {
                 let top: Option<Data> = self.pop();
                 if let Some (Data::Lambda (indices)) = top {
-                    let lambda: Function<_> = Function::from_function_indices(&indices);
+                    let lambda: FunctionReference<_> = FunctionReference::from_function_indices(&indices);
                     lambda.evaluate(function_storage, self)?;
                     Ok(())
                 } else { Err("Stack must have a lambda on top to be applied".to_string()) }
@@ -195,11 +195,11 @@ impl DataStack {
                     Some(Data::Lambda(false_indices)), Some(Data::Lambda(true_indices))
                 ) => match self.pop() {
                     Some(Data::Boolean (boolean)) => if boolean {
-                        let lambda: Function<_> = Function::from_function_indices(&true_indices);
+                        let lambda: FunctionReference<_> = FunctionReference::from_function_indices(&true_indices);
                         lambda.evaluate(function_storage, self)?;
                         Ok (())
                     } else {
-                        let lambda: Function<_> = Function::from_function_indices(&false_indices);
+                        let lambda: FunctionReference<_> = FunctionReference::from_function_indices(&false_indices);
                         lambda.evaluate(function_storage, self)?;
                         Ok (())
                     }
@@ -212,7 +212,7 @@ impl DataStack {
 
             Under => match (self.pop(), self.pop()) {
                 (Some(Data::Lambda (indices)), Some(top)) => {
-                    let lambda: Function<_> = Function::from_function_indices(&indices);
+                    let lambda: FunctionReference<_> = FunctionReference::from_function_indices(&indices);
                     lambda.evaluate(function_storage, self)?;
                     self.push(top);
                     Ok(())

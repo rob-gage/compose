@@ -5,76 +5,7 @@ use crate::{
     Term
 };
 use std::collections::HashMap;
-
-/// A function inside a `FunctionStorage`
-pub struct Function<T = usize> (T);
-
-impl<T> Function<T> {
-
-    /// Helper method to evaluate the `Term`s in a `Function`
-    fn evaluate_terms(
-        function_storage: &FunctionStorage,
-        stack: &mut DataStack,
-        terms: &[Term],
-    ) -> Result<(), String> {
-        for term in terms {
-            match term {
-                Term::Application (index) => {
-                    let function: Function = Function::from_function_index(*index);
-                    function.evaluate(function_storage, stack)?;
-                },
-                Term::Combinator (combinator) => stack.evaluate_combinator(
-                    &function_storage,
-                    combinator.clone()
-                )?,
-                Term::Data (data) => stack.push(data.clone()),
-                Term::Recursion => Self::evaluate_terms(function_storage, stack, terms)?,
-            }
-        }
-        Ok (())
-    }
-
-}
-
-impl Function<usize> {
-
-    /// Evaluates a function using a `FunctionStorage` and a `Stack`
-    pub fn evaluate(
-        &self,
-        function_storage: &FunctionStorage,
-        stack: &mut DataStack
-    ) -> Result<(), String> {
-        let terms: &[Term] = function_storage.get_body(self.0);
-        Self::evaluate_terms(function_storage, stack, terms)?;
-        Ok (())
-    }
-
-    /// Creates a new `Function` from an index into a `FunctionStorage`
-    pub const fn from_function_index(index: usize) -> Self { Function (index) }
-
-}
-
-impl Function<Vec<usize>> {
-
-    /// Evaluates a function using a `FunctionStorage` and a `Stack`
-    pub fn evaluate(
-        &self,
-        function_storage: &FunctionStorage,
-        stack: &mut DataStack
-    ) -> Result<(), String> {
-        for index in self.0.iter() {
-            let terms: &[Term] = function_storage.get_body(*index);
-            Self::evaluate_terms(function_storage, stack, terms)?;
-        }
-        Ok (())
-    }
-
-    /// Creates a new `Function` from multiple composed indices into a `FunctionStorage`
-    pub fn from_function_indices(indices: &[usize]) -> Self {
-        Function (indices.to_vec())
-    }
-
-}
+use super::Function;
 
 
 
@@ -89,10 +20,17 @@ pub struct FunctionStorage {
 impl FunctionStorage  {
 
     /// Gets the body of a `Function` with a given `usize` index as `Term`s
-    pub fn get_body(&self, index: usize) -> &[Term] {
-        &self.function_bodies.get(&index)
-            .expect("`Function` was originally from this `FunctionStorage` and not another, and \
-            was never removed")
+    pub fn get(&self, index: usize) -> Function {
+        Function::Contiguous (&self.function_bodies[&index])
+    }
+
+    /// Gets a composed function from a slice of `usize` indices
+    pub fn get_composed(&self, indices: &[usize]) -> Function {
+        let mut terms: Vec<Term> = Vec::new();
+        for index in indices {
+            terms.extend(self.get(*index).body().iter().cloned());
+        }
+        Function::Composed (terms)
     }
 
     /// Creates a new `FunctionStorage`
@@ -118,6 +56,80 @@ impl FunctionStorage  {
     /// Stores a `&[Term]` and returns its index as a `usize`
     pub fn store(&mut self, index: usize, function_body: &[Term]) {
         self.function_bodies.insert(index, function_body.to_vec());
+    }
+
+}
+
+
+
+
+
+/// A function inside a `FunctionStorage`
+pub struct FunctionReference<T = usize> (T);
+
+impl<T> FunctionReference<T> {
+
+    /// Helper method to evaluate the `Term`s in a `Function`
+    fn evaluate_terms(
+        function_storage: &FunctionStorage,
+        stack: &mut DataStack,
+        terms: &[Term],
+    ) -> Result<(), String> {
+        for term in terms {
+            match term {
+                Term::Application (index) => {
+                    let function: FunctionReference = FunctionReference::from_function_index(*index);
+                    function.evaluate(function_storage, stack)?;
+                },
+                Term::Combinator (combinator) => stack.evaluate_combinator(
+                    &function_storage,
+                    combinator.clone()
+                )?,
+                Term::Data (data) => stack.push(data.clone()),
+                Term::Recursion => Self::evaluate_terms(function_storage, stack, terms)?,
+            }
+        }
+        Ok (())
+    }
+
+}
+
+impl FunctionReference<usize> {
+
+    /// Evaluates a function using a `FunctionStorage` and a `Stack`
+    pub fn evaluate(
+        &self,
+        function_storage: &FunctionStorage,
+        stack: &mut DataStack
+    ) -> Result<(), String> {
+        let terms: &[Term] = function_storage.get(self.0);
+        Self::evaluate_terms(function_storage, stack, terms)?;
+        Ok (())
+    }
+
+    /// Creates a new `Function` from an index into a `FunctionStorage`
+    pub const fn from_function_index(index: usize) -> Self { FunctionReference(index) }
+
+}
+
+impl FunctionReference<Vec<usize>> {
+
+    /// Evaluates a function using a `FunctionStorage` and a `Stack`
+    pub fn evaluate(
+        &self,
+        function_storage: &FunctionStorage,
+        stack: &mut DataStack
+    ) -> Result<(), String> {
+        for index in self.0.iter() {
+            let terms: &[Term] = function_storage.get(*index);
+            Self::evaluate_terms(function_storage, stack, terms)?;
+        }
+        Ok (())
+    }
+
+    /// Creates a new `Function` from multiple composed indices into a `FunctionStorage`
+    pub fn from_function_indices(indices: &[usize]) -> Self {
+        FunctionReference(indices.to_vec())
     }
 
 }

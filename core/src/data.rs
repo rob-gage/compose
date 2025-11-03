@@ -40,7 +40,7 @@ impl Data {
             Data::Lambda (function_indices) => {
                 w.write_str("( ")?;
                 for function_index in function_indices {
-                    for term in namespace.function_storage().get_body(*function_index) {
+                    for term in namespace.function_storage().get(*function_index).body() {
                         namespace.write_term(w, term)?;
                         w.write_char(' ')?;
                     }
