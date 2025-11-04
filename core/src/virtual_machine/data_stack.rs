@@ -34,6 +34,8 @@ pub struct DataStack {
 
 impl DataStack {
 
+    /// Creates a new `DataStack` from a `&[Data]` with the top item at the end of the sta
+
     /// Returns the items in this stack as a `&[Data]`
     pub fn items(&self) -> SmallVec<[Data; STACK_STACK_SIZE]> {
         unsafe { (*self.buffer.get()).clone() }

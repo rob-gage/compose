@@ -26,6 +26,13 @@ pub struct VirtualMachine<'a> {
 }
 
 impl<'a> VirtualMachine<'a> {
+    
+    /// Adds data to the stack of this `VirtualMachine`
+    pub fn add_data(&mut self, data: &[Data]) {
+        for item in data {
+            self.data_stack.push(item.clone());
+        }
+    }
 
     /// Evaluates a function using this `VirtualMachine`
     pub fn evaluate(&'a mut self, function: Function<'a>) -> Result<(), String> {
