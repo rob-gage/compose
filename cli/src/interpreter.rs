@@ -1,11 +1,13 @@
 // Copyright Rob Gage 2025
 
 use compose_core::{
+    Data,
     FunctionReference,
     FunctionStorage,
     Namespace,
     DataStack,
     UnresolvedFunction,
+    VirtualMachine,
 };
 use pups::*;
 use rustyline::{
@@ -17,17 +19,19 @@ use rustyline::{
 use std::process::exit;
 
 /// An interpreter for the `Compose` language
-pub struct Interpreter {
+pub struct Interpreter<'a> {
     /// The `Namespace` used by this `Interpreter`
-    namespace: Namespace,
-    /// The `Stack` used by this `Interpreter`
-    stack: DataStack,
+    namespace: Namespace<'a>,
+    /// The virtual machine used by this `Interpreter`
+    virtual_machine: VirtualMachine<'a>
 }
 
 impl Interpreter {
 
     /// Creates a new `Interpreter`
-    pub fn new() -> Self { Self { namespace: Namespace::new(), stack: DataStack::new() } }
+    pub fn new() -> Self {
+        Self { namespace: Namespace::new(), virtual_machine: VirtualMachine:: }
+    }
 
     /// Runs one iteration of the main `Interpreter` loop
     fn read_evaluate_print(&mut self, editor: &mut Editor<(), DefaultHistory>) {
