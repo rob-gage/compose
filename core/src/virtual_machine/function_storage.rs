@@ -4,28 +4,32 @@ use crate::{
     DataStack,
     Term
 };
-use std::collections::HashMap;
+use std::{
+    collections::HashMap,
+    marker::PhantomData,
+};
 use super::Function;
 
 
 
 /// Stores `Functions`
-pub struct FunctionStorage {
+pub struct FunctionStorage<'a> {
     /// The stored function bodies
     function_bodies: HashMap<usize, Vec<Term>>,
     /// The next index to store a function at
     next_index: usize,
+    phantom_data: PhantomData<&'a ()>
 }
 
-impl FunctionStorage  {
+impl<'a> FunctionStorage<'a>  {
 
     /// Gets the body of a `Function` with a given `usize` index as `Term`s
-    pub fn get(&'_ self, index: usize) -> Function<'_> {
+    pub fn get(&'a self, index: usize) -> Function<'a> {
         Function::Contiguous (&self.function_bodies[&index])
     }
 
     /// Gets a composed function from a slice of `usize` indices
-    pub fn get_composed(&'_ self, indices: &[usize]) -> Function<'_> {
+    pub fn get_composed(&self, indices: &[usize]) -> Function<'a> {
         let mut terms: Vec<Term> = Vec::new();
         for index in indices {
             terms.extend(self.get(*index).body().iter().cloned());
@@ -34,10 +38,11 @@ impl FunctionStorage  {
     }
 
     /// Creates a new `FunctionStorage`
-    pub fn new() -> FunctionStorage {
-        FunctionStorage {
+    pub fn new() -> Self {
+         Self {
             function_bodies: HashMap::new(),
             next_index: 0,
+             phantom_data: PhantomData
         }
     }
 

@@ -14,5 +14,5 @@ pub enum ControlAction<'a> {
     /// Pops a `ControlFrame` off the `ControlStack` before continuing evaluation
     Pop,
     /// Pushes a new `ControlFrame` to the `ControlStack` before continuing evaluation
-    Push (&'a Function<'a>),
+    Push (Function<'a>),
 }

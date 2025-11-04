@@ -20,7 +20,7 @@ use terms::Term;
 pub struct VirtualMachine<'a> {
     control_stack: ControlStack<'a>,
     data_stack: DataStack,
-    function_storage: &'a FunctionStorage,
+    function_storage: &'a FunctionStorage<'a>,
 }
 
 impl<'a> VirtualMachine<'a> {
@@ -28,24 +28,15 @@ impl<'a> VirtualMachine<'a> {
     /// Runs the `VirtualMachine` to perform the evaluation process
     fn run(&'a mut self) -> Result<(), String> {
         loop {
-            let action: ControlAction = {
-                let Some (frame) = self.control_stack.top() else { return Ok (()) };
-                frame.run_step(&mut self.data_stack, self.function_storage)
-            };
-            loop {
-                match action {
-                    ControlAction::Continue => continue,
-                    ControlAction::Error (error) => return Err (error),
-                    ControlAction::Halt  => return Ok (()),
-                    ControlAction::Pop => {
-                        self.control_stack.pop_frame();
-                        break
-                    },
-                    ControlAction::Push (new_frame) => self.control_stack.push_frame(
-                        ControlFrame::from_function(new_frame.clone())
-                    ),
-                }
-            };
+            let Some(frame) = self.control_stack.top() else { return Ok(()) };
+            match frame.run_step(&mut self.data_stack, &self.function_storage) {
+                ControlAction::Continue => continue,
+                ControlAction::Error(error) => return Err(error),
+                ControlAction::Halt => return Ok(()),
+                ControlAction::Pop => self.control_stack.pop_frame(),
+                ControlAction::Push(new_frame) =>
+                    self.control_stack.push_frame(ControlFrame::from_function(new_frame)),
+            }
         }
     }
 

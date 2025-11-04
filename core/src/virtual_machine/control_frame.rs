@@ -29,16 +29,16 @@ impl<'a> ControlFrame<'a> {
 
     /// Runs one step in the evaluation process for this `ControlFrame`
     pub fn run_step(
-        &'_ self,
+        &'a self,
         data_stack: &mut DataStack,
-        function_storage: &'_ FunctionStorage,
-    ) -> ControlAction<'_> {
+        function_storage: &'a FunctionStorage,
+    ) -> ControlAction<'a> {
         let Some (term) = self.function.body().get(unsafe { *self.index.get() })
         else { return ControlAction::Pop };
         match term {
             Term::Application (function_index) => {
                 let function: Function = function_storage.get(*function_index);
-                ControlAction::Push (&self.function)
+                ControlAction::Push (function)
             },
             Term::Combinator (combinator) => match data_stack.evaluate_combinator(
                 function_storage,
@@ -56,7 +56,7 @@ impl<'a> ControlFrame<'a> {
                 ControlAction::Continue
             },
             Term::Recursion =>
-                ControlAction::Push (&self.function),
+                ControlAction::Push (self.function.clone()),
         }
     }
 
