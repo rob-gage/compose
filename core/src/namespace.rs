@@ -20,16 +20,16 @@ use crate::{
 };
 
 /// Allows definition and retrieval of named functions and anonymous functions
-pub struct Namespace {
+pub struct Namespace<'a> {
     /// The `TermBuffer` used to store functions in this namespace
-    function_storage: FunctionStorage,
+    function_storage: FunctionStorage<'a>,
     /// The indices of defined functions in the function storage mapped by name
     functions_by_name: HashMap<String, usize>,
     /// The names of functions defined in the `Namespace` mapped by their function index
     names_by_function: HashMap<usize, String>
 }
 
-impl Namespace {
+impl<'a> Namespace<'a> {
 
     /// Defines a new `Function` in this `Namespace` from an `UnresolvedFunction`
     pub fn define(
@@ -43,22 +43,8 @@ impl Namespace {
         Ok (FunctionReference::from_function_index (function_index))
     }
 
-    /// Displays a term within the context of this `Namespace`
-    pub fn write_term<W: Write>(&self, w: &mut W, term: &Term) -> FormatResult {
-       match term {
-           Term::Application (function_index) => w.write_str(
-               self.names_by_function.get(&function_index)
-                   .expect("`Namespace::format_term` will only be called on terms that exist \
-                   in this `Namespace`")
-           ),
-           Term::Combinator (combinator) => w.write_str(combinator.name()),
-           Term::Data (data) => data.write(w, self),
-           Term::Recursion => w.write_str("@"),
-       }
-    }
-
     /// Returns the `FunctionStorage` used by this `Namespace`
-    pub const fn function_storage(&self) -> &FunctionStorage { &self.function_storage }
+    pub const fn function_storage(&'a self) -> &'a FunctionStorage<'a> { &self.function_storage }
 
     /// Creates a new `Namespace`
     pub fn new() -> Self {
@@ -108,6 +94,19 @@ impl Namespace {
         } else { Err (undefined) }
     }
 
+    /// Displays a term within the context of this `Namespace`
+    pub fn write_term<W: Write>(&self, w: &mut W, term: &Term) -> FormatResult {
+        match term {
+            Term::Application (function_index) => w.write_str(
+                self.names_by_function.get(&function_index)
+                    .expect("`Namespace::format_term` will only be called on terms that exist \
+                   in this `Namespace`")
+            ),
+            Term::Combinator (combinator) => w.write_str(combinator.name()),
+            Term::Data (data) => data.write(w, self),
+            Term::Recursion => w.write_str("@"),
+        }
+    }
 
 }
 

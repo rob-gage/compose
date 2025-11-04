@@ -34,6 +34,11 @@ pub struct DataStack {
 
 impl DataStack {
 
+    /// Returns the items in this stack as a `&[Data]`
+    pub fn items(&self) -> SmallVec<[Data; STACK_STACK_SIZE]> {
+        unsafe { (*self.buffer.get()).clone() }
+    }
+
     /// Displays the top of the stack as a string
     pub fn write_stack<W: Write>(&self, f: &mut W, namespace: &Namespace) -> FormatResult {
         const DISPLAY_COUNT: usize = 5;
