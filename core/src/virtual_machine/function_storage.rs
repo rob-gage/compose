@@ -20,12 +20,12 @@ pub struct FunctionStorage {
 impl FunctionStorage  {
 
     /// Gets the body of a `Function` with a given `usize` index as `Term`s
-    pub fn get(&self, index: usize) -> Function {
+    pub fn get(&'_ self, index: usize) -> Function<'_> {
         Function::Contiguous (&self.function_bodies[&index])
     }
 
     /// Gets a composed function from a slice of `usize` indices
-    pub fn get_composed(&self, indices: &[usize]) -> Function {
+    pub fn get_composed(&'_ self, indices: &[usize]) -> Function<'_> {
         let mut terms: Vec<Term> = Vec::new();
         for index in indices {
             terms.extend(self.get(*index).body().iter().cloned());
@@ -102,9 +102,7 @@ impl FunctionReference<usize> {
         function_storage: &FunctionStorage,
         stack: &mut DataStack
     ) -> Result<(), String> {
-        let terms: &[Term] = function_storage.get(self.0);
-        Self::evaluate_terms(function_storage, stack, terms)?;
-        Ok (())
+        unimplemented!()
     }
 
     /// Creates a new `Function` from an index into a `FunctionStorage`
@@ -120,16 +118,12 @@ impl FunctionReference<Vec<usize>> {
         function_storage: &FunctionStorage,
         stack: &mut DataStack
     ) -> Result<(), String> {
-        for index in self.0.iter() {
-            let terms: &[Term] = function_storage.get(*index);
-            Self::evaluate_terms(function_storage, stack, terms)?;
-        }
-        Ok (())
+        unimplemented!()
     }
 
     /// Creates a new `Function` from multiple composed indices into a `FunctionStorage`
     pub fn from_function_indices(indices: &[usize]) -> Self {
-        FunctionReference(indices.to_vec())
+        unimplemented!()
     }
 
 }

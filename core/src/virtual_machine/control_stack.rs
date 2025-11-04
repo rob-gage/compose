@@ -18,12 +18,17 @@ impl<'a> ControlStack<'a> {
     pub fn new() -> Self { Self (UnsafeCell::new(SmallVec::new())) }
 
     /// Removes the `ControlFrame` from the top of this `ControlStack`
-    pub fn pop_frame(&mut self) { self.0.get_mut().pop().unwrap(); }
+    pub fn pop_frame(&self) {
+        unsafe { (*self.0.get()).pop(); }
+    }
 
     /// Adds a new `ControlFrame` to this `ControlStack`
-    pub fn push_frame(&mut self, frame: ControlFrame<'a>) { self.0.get_mut().push(frame); }
+    pub fn push_frame(&'_ self, frame: ControlFrame<'a>) {
+        unsafe { (*self.0.get()).push(frame); }
+    }
 
     /// Returns a reference to the `ControlFrame` at the top of this `ControlStack`
-    pub fn top(&'a self) -> Option<&ControlFrame<'a>> { unsafe { &*self.0.get() }.last() }
-
+    pub fn top(&'a self) -> Option<&ControlFrame<'a>> {
+        unsafe { (*self.0.get()).last() }
+    }
 }

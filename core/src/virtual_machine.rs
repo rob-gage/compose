@@ -28,9 +28,12 @@ impl<'a> VirtualMachine<'a> {
     /// Runs the `VirtualMachine` to perform the evaluation process
     fn run(&'a mut self) -> Result<(), String> {
         loop {
-            let Some (control_frame) = self.control_stack.top() else { return Ok (()) };
+            let action: ControlAction = {
+                let Some (frame) = self.control_stack.top() else { return Ok (()) };
+                frame.run_step(&mut self.data_stack, self.function_storage)
+            };
             loop {
-                match control_frame.run_step(&mut self.data_stack, self.function_storage) {
+                match action {
                     ControlAction::Continue => continue,
                     ControlAction::Error (error) => return Err (error),
                     ControlAction::Halt  => return Ok (()),
@@ -38,9 +41,9 @@ impl<'a> VirtualMachine<'a> {
                         self.control_stack.pop_frame();
                         break
                     },
-                    ControlAction::Push (function) => {
-                        self.control_stack.push_frame(ControlFrame::from_function(function));
-                    }
+                    ControlAction::Push (new_frame) => self.control_stack.push_frame(
+                        ControlFrame::from_function(new_frame.clone())
+                    ),
                 }
             };
         }
