@@ -4,28 +4,18 @@ use crate::{
     Function,
     Term,
 };
-use std::{
-    collections::HashMap,
-    marker::PhantomData,
-};
 
 /// An environment that stores defined `Function`s
-pub struct Environment<'a> {
+pub struct Environment {
     term_buffer: Vec<Term>,
     function_slices: Vec<(usize, usize)>,
-    phantom_data: PhantomData<&'a ()>
 }
 
-impl<'a> Environment<'a> {
+impl Environment {
 
     /// Creates a new `Environment`
     pub const fn new() -> Self {
-        Self { term_buffer: Vec::new(), function_slices: Vec::new(), phantom_data: PhantomData }
-    }
-
-    /// Stores a `&[Term]` and returns its index as a `usize`
-    pub fn store_function(&mut self, index: usize, terms: &[Term]) {
-        unimplemented!()
+        Self { term_buffer: Vec::new(), function_slices: Vec::new() }
     }
 
 }
@@ -50,6 +40,14 @@ impl FunctionReference {
     /// Creates a new `FunctionReference` to be used for composed lambdas
     pub const fn composed() -> FunctionReference<Vec<usize>>{
         FunctionReference (vec![])
+    }
+
+    /// Sets the body of this function using a slice of `Term`s
+    pub fn set_body(&self, environment: &mut Environment, body: &[Term]) {
+        let start: usize = environment.term_buffer.len();
+        environment.term_buffer.extend_from_slice(body);
+        let end: usize = environment.term_buffer.len();
+        environment.function_slices[self.0] = (start, end);
     }
 
 }
