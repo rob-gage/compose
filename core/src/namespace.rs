@@ -14,7 +14,7 @@ use crate::{
     Data,
     Environment,
     FunctionReference,
-    FunctionStorage,
+    LambdaReference,
     Term,
     UnresolvedFunction,
     UnresolvedTerm
@@ -57,7 +57,7 @@ impl Namespace {
     /// index in the `FunctionStorage`
     fn resolve(
         &mut self,
-        reference: FunctionReference,
+        function_reference: FunctionReference,
         unresolved_body: &[UnresolvedTerm],
     ) -> Result<(), HashSet<String>> {
         use UnresolvedTerm::*;
@@ -75,15 +75,15 @@ impl Namespace {
                     } else { undefined.insert(unresolved_name.to_string()); },
                 // resolve lambdas
                 UnresolvedLambda (lambda_body) => {
-                    let lambda_reference: FunctionReference
+                    let reference: FunctionReference
                         = FunctionReference::reserve(&mut self.environment);
                     let lambda: Data = Data::Lambda (
-                        match self.resolve(lambda_reference, lambda_body) {
-                            Ok (_) => vec![lambda_index],
+                        match self.resolve(reference, lambda_body) {
+                            Ok (_) => LambdaReference::from_function(reference),
                             Err (lambda_undefined) => {
                                 undefined.extend(lambda_undefined);
-                                vec![]
-                            } 
+                                LambdaReference::from_function(reference)
+                            }
                         }
                     );
                     resolved.push(Term::Data (lambda));
@@ -91,7 +91,7 @@ impl Namespace {
             }
         }
         if undefined.is_empty() {
-            self.function_storage.store(function_index, &resolved);
+            function_reference.set_body(&mut self.environment, &resolved);
             Ok (())
         } else { Err (undefined) }
     }

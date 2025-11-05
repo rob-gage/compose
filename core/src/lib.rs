@@ -20,9 +20,6 @@ pub use environment::{
 pub use virtual_machine::{
     Data,
     Function,
-    function_storage::{
-        FunctionStorage,
-    },
     VirtualMachine,
 };
 pub use namespace::Namespace;
