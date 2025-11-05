@@ -1,6 +1,7 @@
 // Copyright Rob Gage 2025
 
 use crate::{
+    FunctionReference,
     Integer,
     Namespace,
 };
@@ -20,7 +21,7 @@ pub enum Data {
     Integer (Integer),
 
     /// An anonymous function
-    Lambda (Vec<usize>),
+    Lambda (FunctionReference<Vec<usize>>),
 
     /// A list of `Data`
     List (Vec<Data>),

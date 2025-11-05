@@ -2,6 +2,7 @@
 
 use crate::{
     Combinator,
+    FunctionReference,
     Data,
     DataStack
 };
@@ -18,7 +19,7 @@ where
 {
 
     /// Application of a named function
-    Application (usize),
+    Application (FunctionReference),
 
     /// A combinator that performs an operation on the stack
     Combinator (Combinator),

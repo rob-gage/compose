@@ -15,6 +15,7 @@ use virtual_machine::terms::Term;
 pub use environment::{
     Environment,
     FunctionReference,
+    LambdaReference,
 };
 pub use virtual_machine::{
     Data,

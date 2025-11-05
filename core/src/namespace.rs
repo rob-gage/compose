@@ -12,6 +12,7 @@ use std::{
 };
 use crate::{
     Data,
+    Environment,
     FunctionReference,
     FunctionStorage,
     Term,
@@ -20,36 +21,33 @@ use crate::{
 };
 
 /// Allows definition and retrieval of named functions and anonymous functions
-pub struct Namespace<'a> {
+pub struct Namespace {
     /// The `TermBuffer` used to store functions in this namespace
-    function_storage: FunctionStorage<'a>,
+    environment: Environment,
     /// The indices of defined functions in the function storage mapped by name
-    functions_by_name: HashMap<String, usize>,
+    functions_by_name: HashMap<String, FunctionReference>,
     /// The names of functions defined in the `Namespace` mapped by their function index
-    names_by_function: HashMap<usize, String>
+    names_by_function: HashMap<FunctionReference, String>
 }
 
-impl<'a> Namespace<'a> {
+impl Namespace {
 
     /// Defines a new `Function` in this `Namespace` from an `UnresolvedFunction`
     pub fn define(
         &mut self,
         unresolved_function: &UnresolvedFunction,
     ) -> Result<FunctionReference, HashSet<String>> {
-        let function_index: usize = self.function_storage.reserve();
-        self.functions_by_name.insert(unresolved_function.name().to_string(), function_index);
-        self.names_by_function.insert(function_index, unresolved_function.name().to_string());
-        self.resolve(function_index, unresolved_function.body())?;
-        Ok (FunctionReference::from_function_index (function_index))
+        let reference: FunctionReference = FunctionReference::reserve(&mut self.environment);
+        self.functions_by_name.insert(unresolved_function.name().to_string(), reference);
+        self.names_by_function.insert(reference, unresolved_function.name().to_string());
+        self.resolve(reference, unresolved_function.body())?;
+        Ok (reference)
     }
-
-    /// Returns the `FunctionStorage` used by this `Namespace`
-    pub const fn function_storage(&'a self) -> &'a FunctionStorage<'a> { &self.function_storage }
 
     /// Creates a new `Namespace`
     pub fn new() -> Self {
         Self {
-            function_storage: FunctionStorage::new(),
+            environment: Environment::new(),
             functions_by_name: HashMap::new(),
             names_by_function: HashMap::new()
         }
@@ -59,7 +57,7 @@ impl<'a> Namespace<'a> {
     /// index in the `FunctionStorage`
     fn resolve(
         &mut self,
-        function_index: usize,
+        reference: FunctionReference,
         unresolved_body: &[UnresolvedTerm],
     ) -> Result<(), HashSet<String>> {
         use UnresolvedTerm::*;
@@ -71,19 +69,23 @@ impl<'a> Namespace<'a> {
                 Resolved (term) => resolved.push(term.clone()),
                 // resolve function applications
                 UnresolvedApplication (unresolved_name) =>
-                    if let Some (function_index) = self.functions_by_name.get(unresolved_name) {
-                        resolved.push(Term::Application (*function_index));
+                    if let Some (application_reference)
+                        = self.functions_by_name.get(unresolved_name) {
+                        resolved.push(Term::Application (*application_reference));
                     } else { undefined.insert(unresolved_name.to_string()); },
                 // resolve lambdas
                 UnresolvedLambda (lambda_body) => {
-                    let lambda_index: usize = self.function_storage.reserve();
-                    let lambda: Data = Data::Lambda (match self.resolve(lambda_index, lambda_body) {
-                        Ok (_) => vec![lambda_index],
-                        Err (lambda_undefined) => {
-                            undefined.extend(lambda_undefined);
-                            vec![]
+                    let lambda_reference: FunctionReference
+                        = FunctionReference::reserve(&mut self.environment);
+                    let lambda: Data = Data::Lambda (
+                        match self.resolve(lambda_reference, lambda_body) {
+                            Ok (_) => vec![lambda_index],
+                            Err (lambda_undefined) => {
+                                undefined.extend(lambda_undefined);
+                                vec![]
+                            } 
                         }
-                    });
+                    );
                     resolved.push(Term::Data (lambda));
                 }
             }

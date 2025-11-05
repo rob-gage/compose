@@ -21,6 +21,7 @@ impl Environment {
 }
 
 /// A reference to a `Function` in an `Environment`
+#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
 pub struct FunctionReference<T = usize> (T);
 
 impl FunctionReference {
@@ -37,11 +38,6 @@ impl FunctionReference {
         Self (environment.function_slices.len() - 1)
     }
 
-    /// Creates a new `FunctionReference` to be used for composed lambdas
-    pub const fn composed() -> FunctionReference<Vec<usize>>{
-        FunctionReference (vec![])
-    }
-
     /// Sets the body of this function using a slice of `Term`s
     pub fn set_body(&self, environment: &mut Environment, body: &[Term]) {
         let start: usize = environment.term_buffer.len();
@@ -52,9 +48,12 @@ impl FunctionReference {
 
 }
 
-impl FunctionReference<Vec<usize>> {
+/// A reference to a lambda in an `Environment`
+pub type LambdaReference = FunctionReference<Vec<usize>>;
 
-    /// Fetches the `Function` from its `Environment`
+impl LambdaReference {
+
+    /// Fetches the lambda as a `Function` from its `Environment`
     pub fn fetch<'a>(&self, environment: &'a Environment) -> Function<'a> {
         let mut body: Vec<Term> = Vec::new();
         for &index in &self.0 {
@@ -63,10 +62,17 @@ impl FunctionReference<Vec<usize>> {
         Function::Composed (body)
     }
 
-    /// Joins a `FunctionReference` to this composed `FunctionReference`
-    pub fn join(mut self, other: FunctionReference) -> Self {
-        self.0.push(other.0);
+    /// Composes this lambda with another
+    pub fn compose(mut self, other: LambdaReference) -> Self {
+        self.0.extend(other.0);
         self
+    }
+
+    /// Creates a new `LambdaReference` from a `FunctionReference`
+    pub fn from_function(
+        function_reference: FunctionReference
+    ) -> LambdaReference {
+        FunctionReference (vec![function_reference.0])
     }
 
 }
