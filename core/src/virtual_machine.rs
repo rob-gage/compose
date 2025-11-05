@@ -13,11 +13,11 @@ use control_action::ControlAction;
 use control_frame::ControlFrame;
 use control_stack::ControlStack;
 use data_stack::DataStack;
-use function::Function;
 use function_storage::FunctionStorage;
 use terms::Term;
 
 pub use data::Data;
+pub use function::Function;
 
 /// A virtual machine used for evaluation of Compose programs and functions
 pub struct VirtualMachine<'a> {
