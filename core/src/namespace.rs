@@ -44,6 +44,9 @@ impl Namespace {
         Ok (reference)
     }
 
+    /// Returns the environment of this `Namespace`
+    pub const fn environment(&self) -> &Environment { &self.environment }
+
     /// Creates a new `Namespace`
     pub fn new() -> Self {
         Self {
@@ -69,9 +72,9 @@ impl Namespace {
                 Resolved (term) => resolved.push(term.clone()),
                 // resolve function applications
                 UnresolvedApplication (unresolved_name) =>
-                    if let Some (application_reference)
+                    if let Some (reference)
                         = self.functions_by_name.get(unresolved_name) {
-                        resolved.push(Term::Application (*application_reference));
+                        resolved.push(Term::Application (*reference));
                     } else { undefined.insert(unresolved_name.to_string()); },
                 // resolve lambdas
                 UnresolvedLambda (lambda_body) => {
@@ -99,8 +102,8 @@ impl Namespace {
     /// Displays a term within the context of this `Namespace`
     pub fn write_term<W: Write>(&self, w: &mut W, term: &Term) -> FormatResult {
         match term {
-            Term::Application (function_index) => w.write_str(
-                self.names_by_function.get(&function_index)
+            Term::Application (reference) => w.write_str(
+                self.names_by_function.get(&reference)
                     .expect("`Namespace::format_term` will only be called on terms that exist \
                    in this `Namespace`")
             ),

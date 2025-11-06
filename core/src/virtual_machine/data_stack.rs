@@ -4,8 +4,9 @@ use crate::{
     Integer,
     Combinator,
     Data,
+    Function,
+    Environment,
     FunctionReference,
-    FunctionStorage,
     Namespace,
 };
 use smallvec::{
@@ -60,7 +61,7 @@ impl DataStack {
     /// Evaluates a `Combinator`
     pub fn evaluate_combinator(
         &mut self,
-        function_storage: &FunctionStorage,
+        environment: &Environment,
         combinator: Combinator
     ) -> Result<(), String> {
         use Combinator::*;
@@ -173,9 +174,9 @@ impl DataStack {
 
             Apply => {
                 let top: Option<Data> = self.pop();
-                if let Some (Data::Lambda (indices)) = top {
-                    let lambda: FunctionReference<_> = FunctionReference::from_function_indices(&indices);
-                    lambda.evaluate(function_storage, self)?;
+                if let Some (Data::Lambda (reference)) = top {
+                    let lambda: Function = reference.fetch(environment);
+                    lambda.evaluate(environment, self)?;
                     Ok(())
                 } else { Err("Stack must have a lambda on top to be applied".to_string()) }
             },
@@ -203,11 +204,11 @@ impl DataStack {
                 ) => match self.pop() {
                     Some(Data::Boolean (boolean)) => if boolean {
                         let lambda: FunctionReference<_> = FunctionReference::from_function_indices(&true_indices);
-                        lambda.evaluate(function_storage, self)?;
+                        lambda.evaluate(environment, self)?;
                         Ok (())
                     } else {
                         let lambda: FunctionReference<_> = FunctionReference::from_function_indices(&false_indices);
-                        lambda.evaluate(function_storage, self)?;
+                        lambda.evaluate(environment, self)?;
                         Ok (())
                     }
                     _ => Err("Cannot perform `if` operation unless there is a boolean below \
@@ -220,7 +221,7 @@ impl DataStack {
             Under => match (self.pop(), self.pop()) {
                 (Some(Data::Lambda (indices)), Some(top)) => {
                     let lambda: FunctionReference<_> = FunctionReference::from_function_indices(&indices);
-                    lambda.evaluate(function_storage, self)?;
+                    lambda.evaluate(environment, self)?;
                     self.push(top);
                     Ok(())
                 }

@@ -19,17 +19,10 @@ pub use function::Function;
 pub struct VirtualMachine<'a> {
     control_stack: ControlStack<'a>,
     data_stack: DataStack,
-    function_storage: Environment,
+    environment: Environment,
 }
 
 impl<'a> VirtualMachine<'a> {
-    
-    /// Adds data to the stack of this `VirtualMachine`
-    pub fn add_data(&mut self, data: &[Data]) {
-        for item in data {
-            self.data_stack.push(item.clone());
-        }
-    }
 
     /// Evaluates a function using this `VirtualMachine`
     pub fn evaluate(&'a mut self, function: Function<'a>) -> Result<(), String> {
@@ -37,20 +30,11 @@ impl<'a> VirtualMachine<'a> {
         self.run()
     }
 
-    // /// Creates a new `VirtualMachine`
-    // pub fn from_function_storage(function_storage: &'a FunctionStorage) -> Self {
-    //     Self {
-    //         control_stack: ControlStack::new(),
-    //         data_stack: DataStack::new(),
-    //         function_storage,
-    //     }
-    // }
-
     /// Runs the `VirtualMachine` to perform the evaluation process
     fn run(&'a mut self) -> Result<(), String> {
         loop {
             let Some(frame) = self.control_stack.top() else { return Ok(()) };
-            match frame.run_step(&mut self.data_stack, &self.function_storage) {
+            match frame.run_step(&mut self.data_stack, &self.environment) {
                 ControlAction::Continue => continue,
                 ControlAction::Error(error) => return Err(error),
                 ControlAction::Halt => return Ok(()),
@@ -61,9 +45,18 @@ impl<'a> VirtualMachine<'a> {
         }
     }
 
-    /// Returns the data stack items as a `&[Data]`, with the top item at the end
-    pub fn items(&self) -> impl IntoIterator<Item = Data> {
+    /// Returns the data on this `VirtualMachine`s stack as an iterator, starting at the bottom
+    /// of the stack
+    pub fn data(&self) -> impl IntoIterator<Item = Data> {
         self.data_stack.items()
+    }
+
+    /// Adds data to the stack of this `VirtualMachine`
+    pub fn with_data(mut self, data: &[Data]) -> Self {
+        for item in data {
+            self.data_stack.push(item.clone());
+        }
+        self
     }
 
 }

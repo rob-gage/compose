@@ -1,7 +1,7 @@
 // Copyright Rob Gage 2025
 
 use crate::{
-    FunctionReference,
+    LambdaReference,
     Integer,
     Namespace,
 };
@@ -21,7 +21,7 @@ pub enum Data {
     Integer (Integer),
 
     /// An anonymous function
-    Lambda (FunctionReference<Vec<usize>>),
+    Lambda (LambdaReference),
 
     /// A list of `Data`
     List (Vec<Data>),
@@ -38,13 +38,11 @@ impl Data {
 
             Data::Integer (integer) => w.write_str(&integer.to_string()),
 
-            Data::Lambda (function_indices) => {
+            Data::Lambda (reference) => {
                 w.write_str("( ")?;
-                for function_index in function_indices {
-                    for term in namespace.function_storage().get(*function_index).body() {
-                        namespace.write_term(w, term)?;
-                        w.write_char(' ')?;
-                    }
+                for term in reference.fetch(namespace.environment()).body() {
+                    namespace.write_term(w, term)?;
+                    w.write_char(' ')?;
                 }
                 w.write_char(')')
             },
