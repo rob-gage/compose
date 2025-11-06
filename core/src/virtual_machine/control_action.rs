@@ -1,10 +1,13 @@
 // Copyright Rob Gage 2025
 
-use super::Function;
+use super::{
+    ControlFrame,
+    Function
+};
 
 /// Describes how the `VirtualMachine` should manipulate its `ControlStack` after an
 /// evaluation step
-pub enum ControlAction<'a> {
+pub enum ControlAction<'e> {
     /// Does nothing, continues evaluation
     Continue,
     /// Halts evaluation, and returns an error
@@ -14,5 +17,5 @@ pub enum ControlAction<'a> {
     /// Pops a `ControlFrame` off the `ControlStack` before continuing evaluation
     Pop,
     /// Pushes a new `ControlFrame` to the `ControlStack` before continuing evaluation
-    Push (Function<'a>),
+    Push (Function<'e>),
 }
