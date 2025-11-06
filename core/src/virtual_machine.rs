@@ -5,6 +5,7 @@ pub mod data_stack;
 mod function;
 pub mod function_storage;
 pub mod terms;
+pub mod combinator;
 
 use smallvec::SmallVec;
 use std::cell::UnsafeCell;

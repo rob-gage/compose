@@ -1,12 +1,18 @@
 // Copyright Rob Gage 2025
 
-use pups::*;
+use crate::{
+    Data,
+    DataStack,
+    Environment,
+    VirtualMachine
+};
+use crate::integer::Integer;
 
 macro_rules! combinators {
     (
         $(
             $(#[$meta:meta])*
-            $variant:ident :: $token:expr
+            $variant:ident ; $token:expr ; $lambda:expr
         ),* $(,)?
     ) => {
 
@@ -19,6 +25,15 @@ macro_rules! combinators {
         }
 
         impl Combinator {
+
+            /// The function that runs this combinator on a virtual machine
+            pub const fn function<'a>(&self) -> impl Fn(&'a mut VirtualMachine<'a>) {
+                match self {
+                    $(
+                        Combinator::$variant => $lambda,
+                    )*
+                }
+            }
 
             /// Returns the name of the `Combinator`
             pub const fn name(&self) -> &'static str {
@@ -42,14 +57,23 @@ combinators! {
     /// `a b -> (a + b)`
     ///
     /// Adds the two numbers on top of the stack
-    Add :: "+",
+    Add
+    ; "+"
+    ; |vm| {
+
+    },
 
     /// ## Divide
     ///
     /// `a b -> (a / b)`
     ///
     /// Divides the second number on top of the stack by the number on top of the stack
-    Divide :: "/",
+    Divide
+    ; "/"
+    ; |vm| {
+
+    },
+
 
     /// ## Modulo
     ///
@@ -57,21 +81,27 @@ combinators! {
     ///
     /// Evaluates to the remainder of the second number on top of the stack divided by the first
     /// number on top of the stack
-    Modulo :: "%",
+    Modulo
+    ; "%"
+    ; |vm| {},
 
     /// ## Multiply
     ///
     /// `a b -> (a * b)`
     ///
     /// Multiplies the two numbers on top of the stack
-    Multiply :: "*",
+    Multiply
+    ; "*"
+    ; |vm| {},
 
     /// ## Subtract
     ///
     /// `a b -> (a - b)`
     ///
     /// Subtracts the number on top of the stack from the second number on top of the stack
-    Subtract :: "-",
+    Subtract
+    ; "-"
+    ; |vm| {},
 
     /// # Boolean Logic Combinators
 
@@ -81,7 +111,9 @@ combinators! {
     ///
     /// Transforms the two booleans on top of the stack to one with a true value if they are both
     /// true, otherwise transforms them into a boolean with a false value.
-    And :: "&",
+    And
+    ; "&"
+    ; |vm| {},
 
     /// ## Exclusive Or
     ///
@@ -89,14 +121,18 @@ combinators! {
     ///
     /// Transforms the two booleans on top of the stack to one with a true value if only one is
     /// true, otherwise transforms them into a boolean with a false value.
-    ExclusiveOr :: "^",
+    ExclusiveOr
+    ; "^"
+    ; |vm| {},
 
     /// ## Not
     ///
     /// `a -> !a`
     ///
     /// Transforms a boolean on top of the stack to true if it is false, and false if it is true.
-    Not :: "!",
+    Not
+    ; "!"
+    ; |vm| {},
 
     /// ## Or
     ///
@@ -104,7 +140,9 @@ combinators! {
     ///
     /// Transforms the two booleans on top of the stack to one with a true value if either one is
     /// true, otherwise transforms them into a boolean with a false value.
-    Or :: "|",
+    Or
+    ; "|"
+    ; |vm| {},
 
     /// ## Comparison Combinators
 
@@ -114,7 +152,9 @@ combinators! {
     ///
     /// Evaluates to a true boolean value if the top two items on the stack are equal, otherwise
     /// evaluates to a false boolean value.
-    Equality :: "=",
+    Equality
+    ; "="
+    ; |vm| {},
 
     /// ## Greater Than
     ///
@@ -122,7 +162,9 @@ combinators! {
     ///
     /// Evaluates to a true boolean value if the integer on top of the stack is less than the
     /// one below it.
-    GreaterThan :: ">",
+    GreaterThan
+    ; ">"
+    ; |vm| {},
 
     /// ## Less Than
     ///
@@ -130,7 +172,9 @@ combinators! {
     ///
     /// Evaluates to a true boolean value if the integer on top of the stack is greater than the
     /// one below it.
-    LessThan :: "<",
+    LessThan
+    ; "<"
+    ; |vm| {},
 
     /// # Functional Combinators
 
@@ -139,7 +183,9 @@ combinators! {
     /// `a |f| -> a ...`
     ///
     /// Applies the function on top of the stack
-    Apply :: "apply",
+    Apply
+    ; "apply"
+    ; |vm| {},
 
     /// ## If
     ///
@@ -148,21 +194,27 @@ combinators! {
     /// Applies function `|f|` (third from top of stack) to term `a` (fourth from top of stack) if
     /// boolean `b` (top of stack) is a true, otherwise applies function `|g|` (second from tbe top
     /// of stack) to term `a` and the stack below
-    If :: "if",
+    If
+    ; "if"
+    ; |vm| {},
 
     /// ## Compose
     ///
     /// `|f| |g| -> |f g|`
     ///
     /// Composes a function from two functions on top of the stack
-    Compose :: "compose",
+    Compose
+    ; "compose"
+    ; |vm| {},
 
     /// ## Under
     ///
     /// `a b |f| -> a ... b`
     ///
     /// Applies the function on top of the stack to the second value from the top of the stack
-    Under :: "under",
+    Under
+    ; "under"
+    ; |vm| {},
 
     /// # List Processing Combinators
 
@@ -172,14 +224,18 @@ combinators! {
     ///
     /// Prepends an element `a` (second from top of the stack) to the list `[x]` (top of the
     /// stack)
-    Construct :: "construct",
+    Construct
+    ; "construct"
+    ; |vm| {},
 
     /// ## Count
     ///
     /// `[x] -> a`
     ///
     /// Turns a list on top of the stack into its size
-    Count :: "count",
+    Count
+    ; "count"
+    ; |vm| {},
 
     /// ## Filter
     ///
@@ -187,7 +243,9 @@ combinators! {
     ///
     /// Filters the list `[x]` (second from top of the stack), keeping only the items
     /// that match a predicate function `|f|` (top of the stack)
-    Filter :: "filter",
+    Filter
+    ; "filter"
+    ; |vm| {},
 
     /// ## Fold
     ///
@@ -196,21 +254,27 @@ combinators! {
     /// Reduces the list `[x]` (third from top of the stack) into a single accumulated
     /// value by applying the function `|f|` (on top of the stack) to the accumulator `a` (second
     /// from top of the stack) with each element of the list.
-    Fold :: "fold",
+    Fold
+    ; "fold"
+    ; |vm| {},
 
     /// ## Head
     ///
     /// `[x] -> a`
     ///
     /// Returns the first element in the list on top of the stack
-    Head :: "head",
+    Head
+    ; "head"
+    ; |vm| {},
 
     /// ## Join
     ///
     /// `[x] [y] -> [x y]`
     ///
     /// Joins the two lists on top of the stack into one
-    Join :: "join",
+    Join
+    ; "join"
+    ; |vm| {},
 
     /// ## Map
     ///
@@ -218,14 +282,18 @@ combinators! {
     ///
     /// Applies the function `|f|` (top of the stack) to every item in the list `[x]` (second
     /// from top of the stack) creating a new list
-    Map :: "map",
+    Map
+    ; "map"
+    ; |vm| {},
 
     /// ## Tail
     ///
     /// `[x] -> a`
     ///
     /// Returns everything but the first element in the list on top of the stack
-    Tail :: "tail",
+    Tail
+    ; "tail"
+    ; |vm| {},
 
     /// # Stack Manipulation Combinators
 
@@ -234,34 +302,44 @@ combinators! {
     /// `a -> a a`
     ///
     /// Duplicates the item on top of the stack
-    Copy :: "copy",
+    Copy
+    ; "copy"
+    ; |vm| {},
 
     /// ## Drop
     ///
     /// `a b -> a`
     ///
     /// Removes the item on top of the stack
-    Drop :: "drop",
+    Drop
+    ; "drop"
+    ; |vm| {},
 
     /// ## Hop
     ///
     /// `a b -> a b a`
     ///
     /// Pushes a duplicate of the second value from top of the stack to top of the stack
-    Hop :: "hop",
+    Hop
+    ; "hop"
+    ; |vm| {},
 
     /// ## Rotate
     ///
     /// `a b c -> c a b`
     ///
     /// Moves the top item on the stack to the position below the next top two items
-    Rotate :: "rotate",
+    Rotate
+    ; "rotate"
+    ; |vm| {},
 
     /// ## Swap
     ///
     /// `a b -> b a`
     ///
     /// Swaps the two items on top of the stack
-    Swap :: "swap"
+    Swap
+    ; "swap"
+    ; |vm| {},
 
 }
