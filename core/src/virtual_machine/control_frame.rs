@@ -33,7 +33,7 @@ impl<'e> ControlFrame<'e> {
     pub fn run_step(
         &'e self,
         stack: &'e mut DataStack,
-        environment: &'e Environment<'e>,
+        environment: &'e Environment,
     ) -> ControlAction<'e> {
         let Some (term) = self.function.body().get(unsafe { *self.index.get() })
         else { return ControlAction::Pop };

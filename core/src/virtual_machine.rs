@@ -14,12 +14,14 @@ pub mod combinator;
 use control_action::ControlAction;
 use control_frame::ControlFrame;
 use control_stack::ControlStack;
-
-use smallvec::SmallVec;
-use std::cell::UnsafeCell;
-use crate::Environment;
 use data_stack::DataStack;
 use terms::Term;
+
+use crate::Environment;
+use std::sync::{
+    Arc,
+    RwLock
+};
 
 pub use data::Data;
 pub use function::Function;
@@ -28,7 +30,7 @@ pub use function::Function;
 pub struct VirtualMachine<'e> {
     control_stack: ControlStack<'e>,
     data_stack: DataStack,
-    environment: Environment<'e>,
+    environment: Arc<RwLock<Environment<'e>>>,
 }
 
 impl<'e> VirtualMachine<'e> {
@@ -41,24 +43,30 @@ impl<'e> VirtualMachine<'e> {
 
     /// Runs the `VirtualMachine` to perform the evaluation process
     fn run(&'e mut self) -> Result<(), String> {
-        let Some (frame) = self.control_stack.top() else { return Ok (()) };
+        let env_guard = self.environment.read().unwrap(); // guard lives here
+        let environment: &Environment = unsafe {
+            let pointer: *const Environment = &*env_guard;
+            &*pointer
+        };
         loop {
-            let stack: *mut  DataStack = &mut self.data_stack as *mut _;
-            match frame.run_step(unsafe { &mut *stack }, &self.environment) {
-                ControlAction::Continue => continue,
-                ControlAction::Error(error) => return Err(error),
-                ControlAction::Halt => return Ok(()),
-                ControlAction::Pop => {
-                    self.control_stack.pop_frame();
-                    break;
-                }
-                ControlAction::Push(new_frame) => {
-                    self.control_stack.push_frame(ControlFrame::from_function(new_frame));
-                    break;
+            let Some (frame) = self.control_stack.top() else { return Ok (()) };
+            loop {
+                let stack: *mut  DataStack = &mut self.data_stack as *mut _;
+                match frame.run_step(unsafe { &mut *stack }, &environment) {
+                    ControlAction::Continue => continue,
+                    ControlAction::Error(error) => return Err(error),
+                    ControlAction::Halt => return Ok(()),
+                    ControlAction::Pop => {
+                        self.control_stack.pop_frame();
+                        break;
+                    }
+                    ControlAction::Push(new_frame) => {
+                        self.control_stack.push_frame(ControlFrame::from_function(new_frame));
+                        break;
+                    }
                 }
             }
         }
-        Ok (())
     }
 
     /// Returns the data on this `VirtualMachine`s stack as an iterator, starting at the bottom

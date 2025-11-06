@@ -42,21 +42,6 @@ impl DataStack {
         unsafe { (*self.buffer.get()).clone() }
     }
 
-    /// Displays the top of the stack as a string
-    pub fn write_stack<W: Write>(&self, f: &mut W, namespace: &Namespace) -> FormatResult {
-        const DISPLAY_COUNT: usize = 5;
-        if self.size() > DISPLAY_COUNT {
-            f.write_str("... ")?;
-        } else { f.write_char(' ')?; }
-        for i in (0..DISPLAY_COUNT).rev() {
-            if let Some(item) = self.get_from_top(i) {
-                item.write(f, namespace)?;
-                f.write_char(' ')?;
-            }
-        }
-        Ok (())
-    }
-
 
     // /// Evaluates a `Combinator`
     // pub fn evaluate_combinator(

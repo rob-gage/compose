@@ -31,7 +31,7 @@ pub enum Data {
 impl Data {
 
     /// Formats the data using a `Namespace`
-    pub fn write<W: Write>(&self, w: &mut W, namespace: &Namespace) -> FormatResult {
+    pub fn write<'e, W: Write>(&self, w: &mut W, namespace: &'e Namespace<'e>) -> FormatResult {
         match self {
 
             Data::Boolean (boolean) => w.write_str(if *boolean { "true" } else { "false" }),
@@ -40,7 +40,7 @@ impl Data {
 
             Data::Lambda (reference) => {
                 w.write_str("( ")?;
-                for term in reference.fetch(namespace.environment()).body() {
+                for term in reference.fetch(&*namespace.environment().read().unwrap()).body() {
                     namespace.write_term(w, term)?;
                     w.write_char(' ')?;
                 }

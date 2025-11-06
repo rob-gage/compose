@@ -22,8 +22,8 @@ use std::process::exit;
 pub struct Interpreter<'a> {
     /// The `Namespace` used by this `Interpreter`
     namespace: Namespace<'a>,
-    /// The virtual machine used by this `Interpreter`
-    virtual_machine: VirtualMachine<'a>
+    /// The data held in this `Interpreter`
+    data: 
 }
 
 impl Interpreter {
