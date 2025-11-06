@@ -3,9 +3,7 @@
 use compose_core::{
     Data,
     FunctionReference,
-    FunctionStorage,
     Namespace,
-    DataStack,
     UnresolvedFunction,
     VirtualMachine,
 };
@@ -22,15 +20,20 @@ use std::process::exit;
 pub struct Interpreter<'a> {
     /// The `Namespace` used by this `Interpreter`
     namespace: Namespace<'a>,
-    /// The data held in this `Interpreter`
-    data: 
+    /// The `VirtualMachine` used by this `Interpreter`
+    virtual_machine: VirtualMachine<'a>
 }
 
-impl Interpreter {
+impl<'a> Interpreter<'a> {
 
     /// Creates a new `Interpreter`
     pub fn new() -> Self {
-        Self { namespace: Namespace::new(), virtual_machine: VirtualMachine:: }
+        let namespace = Namespace::new();
+        let virtual_machine = namespace.create_virtual_machine();
+        Self {
+            namespace,
+            virtual_machine,
+        }
     }
 
     /// Runs one iteration of the main `Interpreter` loop
@@ -46,12 +49,7 @@ impl Interpreter {
                         exit(0)
                     }
                     // resets the `Interpreter`
-                    "!reset" => {
-                        println!("Resetting.");
-                        self.namespace = Namespace::new();
-                        self.stack = DataStack::new();
-                        return;
-                    }
+                    "!reset" => *self = Self::new(),
                     _ => {}
                 };
                 let input: Text = Text::from_string(input);
@@ -85,7 +83,7 @@ impl Interpreter {
                         }
                     };
                     // evaluate free terms
-                    match function.evaluate(self.namespace.function_storage(), &mut self.stack) {
+                    match self.virtual_machine.evaluate(function) {
                         Ok (_) => {
                             let mut printed_stack: String = String::new();
                             self.stack.write_stack(&mut printed_stack, &self.namespace).unwrap();

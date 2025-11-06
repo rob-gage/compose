@@ -9,7 +9,7 @@ mod function;
 pub mod function_storage;
 pub mod terms;
 pub mod combinator;
-
+mod function_reference;
 
 use control_action::ControlAction;
 use control_frame::ControlFrame;
@@ -39,6 +39,15 @@ impl<'e> VirtualMachine<'e> {
     pub fn evaluate(&'e mut self, function: Function<'e>) -> Result<(), String> {
         self.control_stack.push_frame(ControlFrame::from_function(function));
         self.run()
+    }
+
+    /// Creates a new `VirtualMachine` from a `&Arc<RwLock<Environment>>`
+    pub fn from_environment(environment: &Arc<RwLock<Environment<'e>>>) -> Self {
+        Self {
+            control_stack: ControlStack::new(),
+            data_stack: DataStack::new(),
+            environment: environment.clone(),
+        }
     }
 
     /// Runs the `VirtualMachine` to perform the evaluation process

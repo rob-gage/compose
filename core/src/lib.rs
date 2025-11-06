@@ -10,9 +10,8 @@ use integer::Integer;
 use syntax::UnresolvedTerm;
 use virtual_machine::terms::Term;
 
-pub use environment::{
+use environment::{
     Environment,
-    FunctionReference,
     LambdaReference,
 };
 pub use virtual_machine::{
@@ -20,6 +19,8 @@ pub use virtual_machine::{
     Function,
     VirtualMachine,
 };
+
+pub use environment::FunctionReference;
 pub use namespace::Namespace;
 pub use virtual_machine::data_stack::DataStack;
 pub use syntax::UnresolvedFunction;

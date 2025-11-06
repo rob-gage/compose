@@ -20,6 +20,7 @@ use crate::{
     FunctionReference,
     LambdaReference,
     Term,
+    VirtualMachine,
     UnresolvedFunction,
     UnresolvedTerm
 };
@@ -36,6 +37,11 @@ pub struct Namespace<'e> {
 
 impl<'e> Namespace<'e> {
 
+    /// Creates a new `VirtualMachine` from this `Namespace`
+    pub fn create_virtual_machine(&self) -> VirtualMachine<'e> {
+        VirtualMachine::from_environment(&self.environment)
+    }
+
     /// Defines a new `Function` in this `Namespace` from an `UnresolvedFunction`
     pub fn define(
         &mut self,
@@ -48,9 +54,6 @@ impl<'e> Namespace<'e> {
         resolve(environment, &self.functions_by_name, reference, unresolved_function.body())?;
         Ok (reference)
     }
-
-    /// Returns the environment of this `Namespace`
-    pub const fn environment(&'e self) -> &Arc<RwLock<Environment>> { &self.environment }
 
     /// Creates a new `Namespace`
     pub fn new() -> Self {
@@ -70,7 +73,26 @@ impl<'e> Namespace<'e> {
                    in this `Namespace`")
             ),
             Term::Combinator (combinator) => w.write_str(combinator.name()),
-            Term::Data (data) => data.write(w, self),
+            Term::Data (data) => match data {
+                Data::Boolean (boolean) => w.write_str(if *boolean { "true" } else { "false" }),
+                Data::Integer (integer) => w.write_str(&integer.to_string()),
+                Data::Lambda (reference) => {
+                    w.write_str("( ")?;
+                    for term in reference.fetch(&*self.environment.read().unwrap()).body() {
+                        self.write_term(w, term)?;
+                        w.write_char(' ')?;
+                    }
+                    w.write_char(')')
+                },
+                Data::List (items) => {
+                    w.write_str("[ ")?;
+                    for item in items {
+                        self.write_term(w, &Term::Data (data.clone()))?;
+                        w.write_char(' ')?;
+                    }
+                    w.write_char(']')
+                }
+            },
             Term::Recursion => w.write_str("@"),
         }
     }
