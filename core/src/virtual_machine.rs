@@ -40,16 +40,23 @@ impl<'a> VirtualMachine<'a> {
     }
 
     /// Runs the `VirtualMachine` to perform the evaluation process
-    fn run(&'a mut self) -> Result<(), String> {
+    fn run(&mut self) -> Result<(), String> {
         loop {
-            let Some(frame) = self.control_stack.top() else { return Ok(()) };
-            match frame.run_step(&mut self.data_stack, &self.environment) {
-                ControlAction::Continue => continue,
-                ControlAction::Error(error) => return Err(error),
-                ControlAction::Halt => return Ok(()),
-                ControlAction::Pop => self.control_stack.pop_frame(),
-                ControlAction::Push(new_frame) =>
-                    self.control_stack.push_frame(ControlFrame::from_function(new_frame)),
+            loop {
+                let frame: &ControlFrame<'a> = self.control_stack.top().unwrap();
+                match frame.run_step(&mut self.data_stack, &self.environment) {
+                    ControlAction::Continue => continue,
+                    ControlAction::Error(error) => return Err(error),
+                    ControlAction::Halt => return Ok(()),
+                    ControlAction::Pop => {
+                        self.control_stack.pop_frame();
+                        break;
+                    }
+                    ControlAction::Push(new_frame) => {
+                        self.control_stack.push_frame(ControlFrame::from_function(new_frame));
+                        break;
+                    }
+                }
             }
         }
     }

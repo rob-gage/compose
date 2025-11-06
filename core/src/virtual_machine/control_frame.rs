@@ -1,7 +1,10 @@
 // Copyright Rob Gage 2025
 
 use std::cell::UnsafeCell;
+use crate::Environment;
 use super::{
+    ControlStack,
+    DataStack,
     Function,
     ControlAction,
     Term,
@@ -29,29 +32,25 @@ impl<'a> ControlFrame<'a> {
     /// Runs one step in the evaluation process for this `ControlFrame`
     pub fn run_step(
         &'a self,
-        virtual_machine: &'a mut VirtualMachine<'a>,
+        stack: &'a mut DataStack,
+        environment: &'a Environment,
     ) -> ControlAction<'a> {
         let Some (term) = self.function.body().get(unsafe { *self.index.get() })
         else { return ControlAction::Pop };
-        match term {
+        let action: ControlAction = match term {
             Term::Application (reference) => {
-                let function: Function = reference.fetch(&virtual_machine.environment);
+                let function: Function = reference.fetch(environment);
                 ControlAction::Push (function)
             },
-            Term::Combinator (combinator) => match combinator.evaluate(virtual_machine) {
-                Ok (_) => {
-                    unsafe { *self.index.get() += 1}
-                    ControlAction::Continue
-                },
-                Err (error) => ControlAction::Error (error.to_string()),
-            },
+            Term::Combinator (combinator) => combinator.evaluate(stack, environment),
             Term::Data (data) => {
-                virtual_machine.data_stack.push(data.clone());
-                unsafe { *self.index.get() += 1}
+                stack.push(data.clone());
                 ControlAction::Continue
             },
             Term::Recursion => ControlAction::Push (self.function.clone()),
-        }
+        };
+        unsafe { *self.index.get() += 1}
+        action
     }
 
 }

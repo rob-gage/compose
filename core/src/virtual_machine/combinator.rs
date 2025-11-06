@@ -1,7 +1,22 @@
 // Copyright Rob Gage 2025
 
-use crate::{Data, DataStack, Environment, Function, FunctionReference, Integer, VirtualMachine};
-use crate::virtual_machine::combinator::Combinator::{Apply, Compose, If, Under};
+use crate::{
+    Data,
+    DataStack,
+    FunctionReference,
+    Integer,
+    Term,
+    VirtualMachine
+};
+use crate::virtual_machine::control_action::ControlAction::Continue;
+use super::{
+    ControlAction::{
+        self,
+        *
+    },
+    Environment,
+    Function,
+};
 
 /// Defines `Combinator` enum
 macro_rules! combinators {
@@ -313,49 +328,55 @@ combinators! {
 impl Combinator {
 
     /// Evaluates this `Combinator` on a `VirtualMachine`
-    pub fn evaluate<'a>(&self, vm: &'a mut VirtualMachine<'a>) -> Result<(), String> {
+    pub fn evaluate<'a>(
+        &self,
+        stack: &'a mut DataStack,
+        environment: &'a Environment
+    ) -> ControlAction<'a> {
         use Combinator::*;
         match self {
 
             // arithmetic combinators
 
-            Add => arithmetic_operation(vm, |a, b| a + b),
+            Add => arithmetic_operation(stack, |a, b| a + b),
 
-            Divide => arithmetic_operation(vm, |a, b| a / b),
+            Divide => arithmetic_operation(stack, |a, b| a / b),
 
-            Modulo => arithmetic_operation(vm, |a, b| a % b),
+            Modulo => arithmetic_operation(stack, |a, b| a % b),
 
-            Multiply => arithmetic_operation(vm, |a, b| a * b),
+            Multiply => arithmetic_operation(stack, |a, b| a * b),
 
-            Subtract => arithmetic_operation(vm, |a, b| a - b),
+            Subtract => arithmetic_operation(stack, |a, b| a - b),
 
             // boolean combinators
 
-            And => boolean_logic_operation(vm, |a, b| a && b),
+            And => boolean_logic_operation(stack, |a, b| a && b),
 
-            ExclusiveOr => boolean_logic_operation(vm, |a, b| a ^ b),
+            ExclusiveOr => boolean_logic_operation(stack, |a, b| a ^ b),
 
-            Not => if let Some(top) = vm.data_stack.pop() {
+            Not => if let Some(top) = stack.pop() {
                 if let Data::Boolean(boolean) = top {
-                    vm.data_stack.push(Data::Boolean(!boolean));
-                    Ok(())
+                    stack.push(Data::Boolean(!boolean));
+                    Continue
                 } else {
-                    Err ("Can only perform boolean \"not\" operation on boolean data".to_string())
+                    Error ("Can only perform boolean \"not\" operation on boolean data".to_string())
                 }
-            } else { Err("Cannot perform boolean \"not\" operation on empty stack".to_string()) },
+            } else {
+                Error ("Cannot perform boolean \"not\" operation on empty stack".to_string())
+            },
 
-            Or => boolean_logic_operation(vm, |a, b| a || b),
+            Or => boolean_logic_operation(stack, |a, b| a || b),
 
             // comparison combinators
 
-            Equality => comparison_operation(vm, |a, b| Ok(a == b)),
+            Equality => comparison_operation(stack, |a, b| Ok(a == b)),
 
-            GreaterThan => comparison_operation(vm, |a, b| match (a, b) {
+            GreaterThan => comparison_operation(stack, |a, b| match (a, b) {
                 (Data::Integer(a), Data::Integer(b)) => Ok(a > b),
                 _ => Err("Can only perform \"greater than\" operation on integers")
             }),
 
-            LessThan => comparison_operation(vm, |a, b| match (a, b) {
+            LessThan => comparison_operation(stack, |a, b| match (a, b) {
                 (Data::Integer(a), Data::Integer(b)) => Ok(a < b),
                 _ => Err("Can only perform \"less than\" operation on integers")
             }),
@@ -363,53 +384,52 @@ impl Combinator {
             // functional combinators
 
             Apply => {
-                let top: Option<Data> = vm.data_stack.pop();
+                let top: Option<Data> = stack.pop();
                 if let Some (Data::Lambda (reference)) = top {
-                    let lambda: Function = reference.fetch(&vm.environment);
-                    vm.evaluate(lambda)
-                } else { Err("Stack must have a lambda on top to be applied".to_string()) }
+                    let lambda: Function = reference.fetch(environment);
+                    Push (lambda)
+                } else { Error ("Stack must have a lambda on top to be applied".to_string()) }
             },
 
-            Compose => match (vm.data_stack.pop(), vm.data_stack.pop()) {
+            Compose => match (stack.pop(), stack.pop()) {
                 (Some(Data::Lambda (a_reference)), Some(Data::Lambda(b_reference))) => {
-                    vm.data_stack.push(Data::Lambda (a_reference.compose(b_reference)));
-                    Ok (())
+                    stack.push(Data::Lambda (a_reference.compose(b_reference)));
+                    Continue
                 }
-                _ => Err("Cannot perform `compose` operation unless there are two lambdas on top of \
-                the stack".to_string()),
+                _ => Error ("Cannot perform `compose` operation unless there are two lambdas on \
+                top of the stack".to_string()),
             }
 
-            If => match (vm.data_stack.pop(), vm.data_stack.pop()) {
+            If => match (stack.pop(), stack.pop()) {
                 (Some(Data::Lambda (false_reference)), Some(Data::Lambda(true_reference))) =>
-                    match vm.data_stack.pop() {
+                    match stack.pop() {
                         Some(Data::Boolean (boolean)) => if boolean {
-                            let true_lambda: Function = true_reference.fetch(&vm.environment);
-                            vm.evaluate(true_lambda)
+                            let true_lambda: Function = true_reference.fetch(environment);
+                            Push (true_lambda)
                         } else {
-                            let false_lambda: Function = false_reference.fetch(&vm.environment);
-                            vm.evaluate(false_lambda)
+                            let false_lambda: Function = false_reference.fetch(environment);
+                            Push (false_lambda)
                         }
-                    _ => Err("Cannot perform `if` operation unless there is a boolean below \
+                    _ => Error ("Cannot perform `if` operation unless there is a boolean below \
                         the two lambdas on top of the stack".to_string())
                 },
-                _ => Err("Cannot perform `if` operation unless there are two lambdas on top of \
+                _ => Error ("Cannot perform `if` operation unless there are two lambdas on top of \
                 the stack".to_string()),
             }
 
-            Under => match (vm.data_stack.pop(), vm.data_stack.pop()) {
+            Under => match (stack.pop(), stack.pop()) {
                 (Some(Data::Lambda (reference)), Some(top)) => {
-                    let lambda: Function = reference.fetch(&vm.environment);
-                    vm.evaluate(lambda)?;
-                    vm.data_stack.push(top);
-                    Ok(())
+                    let lambda: Function = reference.fetch(environment)
+                        .extended(&[Term::Data (top)]);
+                    Push (lambda)
                 }
-                _ => Err("Cannot perform `under` operation unless there is a lambda under another \
-                item on top of the stack".to_string()),
+                _ => Error ("Cannot perform `under` operation unless there is a lambda under \
+                another item on top of the stack".to_string()),
             }
 
             // --------------------------------------------------------------------------------
 
-            _ => Err (String::from("Combinator not implemented yet."))
+            _ => Error (String::from("Combinator not implemented yet."))
 
         }
     }
@@ -419,13 +439,13 @@ impl Combinator {
 
 
 /// Evaluates an arithmetic operation on a `VirtualMachine`
-fn arithmetic_operation(
-    virtual_machine: &mut VirtualMachine,
+fn arithmetic_operation<'a>(
+    stack: &mut DataStack,
     operation: fn(Integer, Integer) -> Integer
-) -> Result<(), String> {
-    let stack: &mut DataStack = &mut virtual_machine.data_stack;
+) -> ControlAction<'a> {
     if stack.size() < 2 {
-        Err("Not enough items in the stack to perform arithmetic operation".to_string())
+        Error("Not enough items in the stack to perform arithmetic operation"
+            .to_string())
     } else {
         let (b, a): (Integer, Integer) = match (
             stack.pop().unwrap(),
@@ -434,23 +454,24 @@ fn arithmetic_operation(
             (Data::Integer(b), Data::Integer(a)) => {
                 (b, a)
             }
-            _ => return Err("Can only perform arithmetic operation on integers".to_string())
+            _ => return Error("Can only perform arithmetic operation on integers"
+                .to_string())
         };
         stack.push(Data::Integer(operation(a, b)));
-        Ok(())
+        Continue
     }
 }
 
 
 
 /// Evaluates a Boolean logic operation on
-fn boolean_logic_operation(
-    virtual_machine: &mut VirtualMachine,
+fn boolean_logic_operation<'a>(
+    stack: &mut DataStack,
     operation: fn(bool, bool) -> bool,
-) -> Result<(), String> {
-    let stack: &mut DataStack = &mut virtual_machine.data_stack;
+) -> ControlAction<'a> {
     if stack.size() < 2 {
-        Err("Not enough items in the stack to perform boolean logic operation".to_string())
+        ControlAction::Error ("Not enough items in the stack to perform boolean logic operation"
+            .to_string())
     } else {
         let (b, a): (bool, bool) = match (
             stack.pop().unwrap(),
@@ -459,26 +480,28 @@ fn boolean_logic_operation(
             (Data::Boolean(b), Data::Boolean(a)) => {
                 (b, a)
             }
-            _ => return
-                Err("Can only perform boolean logic operation on booleans".to_string())
+            _ => return ControlAction::Error("Can only perform boolean logic operation on booleans"
+                .to_string())
         };
         stack.push(Data::Boolean(operation(a, b)));
-        Ok(())
+        ControlAction::Continue
     }
 }
 
 
 
-fn comparison_operation(
-    virtual_machine: &mut VirtualMachine,
+fn comparison_operation<'a>(
+    stack: &mut DataStack,
     operation: fn(Data, Data) -> Result<bool, &'static str>,
-) -> Result<(), String> {
-    let stack: &mut DataStack = &mut virtual_machine.data_stack;
+) -> ControlAction {
     if stack.size() < 2 {
-        Err("Not enough items in the stack to perform comparison operation".to_string())
+        Error("Not enough items in the stack to perform comparison operation".to_string())
     } else {
         let (b, a): (Data, Data) = (stack.pop().unwrap(), stack.pop().unwrap());
-        stack.push(Data::Boolean(operation(a, b)?));
-        Ok(())
+        stack.push(Data::Boolean(match operation(a, b) {
+            Ok (output) => output,
+            Err (error) => return Error (error.to_string())
+        }));
+        Continue
     }
 }

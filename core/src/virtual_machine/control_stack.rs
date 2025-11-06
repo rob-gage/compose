@@ -23,7 +23,7 @@ impl<'a> ControlStack<'a> {
     }
 
     /// Returns a reference to the `ControlFrame` at the top of this `ControlStack`
-    pub fn top(&'a self) -> Option<&ControlFrame<'a>> {
+    pub fn top(&self) -> Option<&ControlFrame<'_>> {
         unsafe { (*self.0.get()).last() }
     }
 }

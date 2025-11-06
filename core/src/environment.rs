@@ -4,18 +4,20 @@ use crate::{
     Function,
     Term,
 };
+use std::marker::PhantomData;
 
 /// An environment that stores defined `Function`s
-pub struct Environment {
+pub struct Environment<'e> {
     term_buffer: Vec<Term>,
     function_slices: Vec<(usize, usize)>,
+    phantom_data: PhantomData<&'e ()>
 }
 
-impl Environment {
+impl<'e> Environment<'e> {
 
     /// Creates a new `Environment`
     pub const fn new() -> Self {
-        Self { term_buffer: Vec::new(), function_slices: Vec::new() }
+        Self { term_buffer: Vec::new(), function_slices: Vec::new(), phantom_data: PhantomData }
     }
 
 }
@@ -27,7 +29,7 @@ pub struct FunctionReference<T = usize> (T);
 impl FunctionReference {
 
     /// Fetches the `Function` from its `Environment`
-    pub fn fetch<'a>(&self, environment: &'a Environment) -> Function<'a> {
+    pub fn fetch<'e>(&self, environment: &'e Environment<'e>) -> Function<'e> {
         let (start, end): (usize, usize) = environment.function_slices[self.0];
         Function::Contiguous(&environment.term_buffer[start..end])
     }

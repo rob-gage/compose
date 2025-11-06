@@ -19,4 +19,14 @@ impl <'a> Function<'a> {
         }
     }
 
+    /// Extends this `Function`'s body with additional `Term`s
+    pub fn extended(self, terms: &[Term]) -> Self {
+        let mut body: Vec<Term> = match self {
+            Function::Contiguous (body) => body.to_vec(),
+            Function::Composed (body) => body,
+        };
+        body.extend_from_slice(terms);
+        Function::Composed (body)
+    }
+
 }

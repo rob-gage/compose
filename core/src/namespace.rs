@@ -21,16 +21,16 @@ use crate::{
 };
 
 /// Allows definition and retrieval of named functions and anonymous functions
-pub struct Namespace {
+pub struct Namespace<'e> {
     /// The `TermBuffer` used to store functions in this namespace
-    environment: Environment,
+    environment: Environment<'e>,
     /// The indices of defined functions in the function storage mapped by name
     functions_by_name: HashMap<String, FunctionReference>,
     /// The names of functions defined in the `Namespace` mapped by their function index
     names_by_function: HashMap<FunctionReference, String>
 }
 
-impl Namespace {
+impl Namespace<'_> {
 
     /// Defines a new `Function` in this `Namespace` from an `UnresolvedFunction`
     pub fn define(
