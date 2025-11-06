@@ -1,18 +1,14 @@
 // Copyright Rob Gage 2025
 
-use crate::{
-    Data,
-    DataStack,
-    Environment,
-    VirtualMachine
-};
-use crate::integer::Integer;
+use crate::{Data, DataStack, Environment, Function, FunctionReference, Integer, VirtualMachine};
+use crate::virtual_machine::combinator::Combinator::{Apply, Compose, If, Under};
 
+/// Defines `Combinator` enum
 macro_rules! combinators {
     (
         $(
             $(#[$meta:meta])*
-            $variant:ident ; $token:expr ; $lambda:expr
+            $variant:ident ; $token:expr
         ),* $(,)?
     ) => {
 
@@ -26,15 +22,6 @@ macro_rules! combinators {
 
         impl Combinator {
 
-            /// The function that runs this combinator on a virtual machine
-            pub const fn function<'a>(&self) -> impl Fn(&'a mut VirtualMachine<'a>) {
-                match self {
-                    $(
-                        Combinator::$variant => $lambda,
-                    )*
-                }
-            }
-
             /// Returns the name of the `Combinator`
             pub const fn name(&self) -> &'static str {
                 match self {
@@ -45,8 +32,20 @@ macro_rules! combinators {
             }
 
         }
-    };
+    }
 }
+
+
+
+macro_rules! implementation {
+    ($body:expr) => {{
+        fn f(vm: &'a mut VirtualMachine<'a>) -> Result<(), String> {
+            $body(vm)
+        }
+        f
+    }};
+}
+
 
 combinators! {
 
@@ -58,10 +57,7 @@ combinators! {
     ///
     /// Adds the two numbers on top of the stack
     Add
-    ; "+"
-    ; |vm| {
-
-    },
+    ; "+",
 
     /// ## Divide
     ///
@@ -69,10 +65,7 @@ combinators! {
     ///
     /// Divides the second number on top of the stack by the number on top of the stack
     Divide
-    ; "/"
-    ; |vm| {
-
-    },
+    ; "/",
 
 
     /// ## Modulo
@@ -82,8 +75,7 @@ combinators! {
     /// Evaluates to the remainder of the second number on top of the stack divided by the first
     /// number on top of the stack
     Modulo
-    ; "%"
-    ; |vm| {},
+    ; "%",
 
     /// ## Multiply
     ///
@@ -91,8 +83,7 @@ combinators! {
     ///
     /// Multiplies the two numbers on top of the stack
     Multiply
-    ; "*"
-    ; |vm| {},
+    ; "*",
 
     /// ## Subtract
     ///
@@ -100,8 +91,7 @@ combinators! {
     ///
     /// Subtracts the number on top of the stack from the second number on top of the stack
     Subtract
-    ; "-"
-    ; |vm| {},
+    ; "-",
 
     /// # Boolean Logic Combinators
 
@@ -112,18 +102,15 @@ combinators! {
     /// Transforms the two booleans on top of the stack to one with a true value if they are both
     /// true, otherwise transforms them into a boolean with a false value.
     And
-    ; "&"
-    ; |vm| {},
+    ; "&",
 
-    /// ## Exclusive Or
-    ///
+    ///    /// ## Exclusive Or
     /// `a b -> (a ^ b)`
     ///
     /// Transforms the two booleans on top of the stack to one with a true value if only one is
     /// true, otherwise transforms them into a boolean with a false value.
     ExclusiveOr
-    ; "^"
-    ; |vm| {},
+    ; "^",
 
     /// ## Not
     ///
@@ -131,8 +118,7 @@ combinators! {
     ///
     /// Transforms a boolean on top of the stack to true if it is false, and false if it is true.
     Not
-    ; "!"
-    ; |vm| {},
+    ; "!",
 
     /// ## Or
     ///
@@ -141,8 +127,7 @@ combinators! {
     /// Transforms the two booleans on top of the stack to one with a true value if either one is
     /// true, otherwise transforms them into a boolean with a false value.
     Or
-    ; "|"
-    ; |vm| {},
+    ; "|",
 
     /// ## Comparison Combinators
 
@@ -153,8 +138,7 @@ combinators! {
     /// Evaluates to a true boolean value if the top two items on the stack are equal, otherwise
     /// evaluates to a false boolean value.
     Equality
-    ; "="
-    ; |vm| {},
+    ; "=",
 
     /// ## Greater Than
     ///
@@ -163,8 +147,7 @@ combinators! {
     /// Evaluates to a true boolean value if the integer on top of the stack is less than the
     /// one below it.
     GreaterThan
-    ; ">"
-    ; |vm| {},
+    ; ">",
 
     /// ## Less Than
     ///
@@ -174,7 +157,8 @@ combinators! {
     /// one below it.
     LessThan
     ; "<"
-    ; |vm| {},
+    
+,
 
     /// # Functional Combinators
 
@@ -184,8 +168,7 @@ combinators! {
     ///
     /// Applies the function on top of the stack
     Apply
-    ; "apply"
-    ; |vm| {},
+    ; "apply",
 
     /// ## If
     ///
@@ -195,8 +178,7 @@ combinators! {
     /// boolean `b` (top of stack) is a true, otherwise applies function `|g|` (second from tbe top
     /// of stack) to term `a` and the stack below
     If
-    ; "if"
-    ; |vm| {},
+    ; "if",
 
     /// ## Compose
     ///
@@ -204,8 +186,7 @@ combinators! {
     ///
     /// Composes a function from two functions on top of the stack
     Compose
-    ; "compose"
-    ; |vm| {},
+    ; "compose",
 
     /// ## Under
     ///
@@ -213,8 +194,7 @@ combinators! {
     ///
     /// Applies the function on top of the stack to the second value from the top of the stack
     Under
-    ; "under"
-    ; |vm| {},
+    ; "under",
 
     /// # List Processing Combinators
 
@@ -225,8 +205,7 @@ combinators! {
     /// Prepends an element `a` (second from top of the stack) to the list `[x]` (top of the
     /// stack)
     Construct
-    ; "construct"
-    ; |vm| {},
+    ; "construct",
 
     /// ## Count
     ///
@@ -234,8 +213,7 @@ combinators! {
     ///
     /// Turns a list on top of the stack into its size
     Count
-    ; "count"
-    ; |vm| {},
+    ; "count",
 
     /// ## Filter
     ///
@@ -244,8 +222,7 @@ combinators! {
     /// Filters the list `[x]` (second from top of the stack), keeping only the items
     /// that match a predicate function `|f|` (top of the stack)
     Filter
-    ; "filter"
-    ; |vm| {},
+    ; "filter",
 
     /// ## Fold
     ///
@@ -255,8 +232,7 @@ combinators! {
     /// value by applying the function `|f|` (on top of the stack) to the accumulator `a` (second
     /// from top of the stack) with each element of the list.
     Fold
-    ; "fold"
-    ; |vm| {},
+    ; "fold",
 
     /// ## Head
     ///
@@ -264,8 +240,7 @@ combinators! {
     ///
     /// Returns the first element in the list on top of the stack
     Head
-    ; "head"
-    ; |vm| {},
+    ; "head",
 
     /// ## Join
     ///
@@ -273,8 +248,7 @@ combinators! {
     ///
     /// Joins the two lists on top of the stack into one
     Join
-    ; "join"
-    ; |vm| {},
+    ; "join",
 
     /// ## Map
     ///
@@ -283,8 +257,7 @@ combinators! {
     /// Applies the function `|f|` (top of the stack) to every item in the list `[x]` (second
     /// from top of the stack) creating a new list
     Map
-    ; "map"
-    ; |vm| {},
+    ; "map",
 
     /// ## Tail
     ///
@@ -292,8 +265,7 @@ combinators! {
     ///
     /// Returns everything but the first element in the list on top of the stack
     Tail
-    ; "tail"
-    ; |vm| {},
+    ; "tail",
 
     /// # Stack Manipulation Combinators
 
@@ -303,8 +275,7 @@ combinators! {
     ///
     /// Duplicates the item on top of the stack
     Copy
-    ; "copy"
-    ; |vm| {},
+    ; "copy",
 
     /// ## Drop
     ///
@@ -312,8 +283,7 @@ combinators! {
     ///
     /// Removes the item on top of the stack
     Drop
-    ; "drop"
-    ; |vm| {},
+    ; "drop",
 
     /// ## Hop
     ///
@@ -321,8 +291,7 @@ combinators! {
     ///
     /// Pushes a duplicate of the second value from top of the stack to top of the stack
     Hop
-    ; "hop"
-    ; |vm| {},
+    ; "hop",
 
     /// ## Rotate
     ///
@@ -330,8 +299,7 @@ combinators! {
     ///
     /// Moves the top item on the stack to the position below the next top two items
     Rotate
-    ; "rotate"
-    ; |vm| {},
+    ; "rotate",
 
     /// ## Swap
     ///
@@ -339,7 +307,178 @@ combinators! {
     ///
     /// Swaps the two items on top of the stack
     Swap
-    ; "swap"
-    ; |vm| {},
+    ; "swap",
 
+}
+impl Combinator {
+
+    /// Evaluates this `Combinator` on a `VirtualMachine`
+    pub fn evaluate<'a>(&self, vm: &'a mut VirtualMachine<'a>) -> Result<(), String> {
+        use Combinator::*;
+        match self {
+
+            // arithmetic combinators
+
+            Add => arithmetic_operation(vm, |a, b| a + b),
+
+            Divide => arithmetic_operation(vm, |a, b| a / b),
+
+            Modulo => arithmetic_operation(vm, |a, b| a % b),
+
+            Multiply => arithmetic_operation(vm, |a, b| a * b),
+
+            Subtract => arithmetic_operation(vm, |a, b| a - b),
+
+            // boolean combinators
+
+            And => boolean_logic_operation(vm, |a, b| a && b),
+
+            ExclusiveOr => boolean_logic_operation(vm, |a, b| a ^ b),
+
+            Not => if let Some(top) = vm.data_stack.pop() {
+                if let Data::Boolean(boolean) = top {
+                    vm.data_stack.push(Data::Boolean(!boolean));
+                    Ok(())
+                } else {
+                    Err ("Can only perform boolean \"not\" operation on boolean data".to_string())
+                }
+            } else { Err("Cannot perform boolean \"not\" operation on empty stack".to_string()) },
+
+            Or => boolean_logic_operation(vm, |a, b| a || b),
+
+            // comparison combinators
+
+            Equality => comparison_operation(vm, |a, b| Ok(a == b)),
+
+            GreaterThan => comparison_operation(vm, |a, b| match (a, b) {
+                (Data::Integer(a), Data::Integer(b)) => Ok(a > b),
+                _ => Err("Can only perform \"greater than\" operation on integers")
+            }),
+
+            LessThan => comparison_operation(vm, |a, b| match (a, b) {
+                (Data::Integer(a), Data::Integer(b)) => Ok(a < b),
+                _ => Err("Can only perform \"less than\" operation on integers")
+            }),
+
+            // functional combinators
+
+            Apply => {
+                let top: Option<Data> = vm.data_stack.pop();
+                if let Some (Data::Lambda (reference)) = top {
+                    let lambda: Function = reference.fetch(&vm.environment);
+                    vm.evaluate(lambda)
+                } else { Err("Stack must have a lambda on top to be applied".to_string()) }
+            },
+
+            Compose => match (vm.data_stack.pop(), vm.data_stack.pop()) {
+                (Some(Data::Lambda (a_reference)), Some(Data::Lambda(b_reference))) => {
+                    vm.data_stack.push(Data::Lambda (a_reference.compose(b_reference)));
+                    Ok (())
+                }
+                _ => Err("Cannot perform `compose` operation unless there are two lambdas on top of \
+                the stack".to_string()),
+            }
+
+            If => match (vm.data_stack.pop(), vm.data_stack.pop()) {
+                (Some(Data::Lambda (false_reference)), Some(Data::Lambda(true_reference))) =>
+                    match vm.data_stack.pop() {
+                        Some(Data::Boolean (boolean)) => if boolean {
+                            let true_lambda: Function = true_reference.fetch(&vm.environment);
+                            vm.evaluate(true_lambda)
+                        } else {
+                            let false_lambda: Function = false_reference.fetch(&vm.environment);
+                            vm.evaluate(false_lambda)
+                        }
+                    _ => Err("Cannot perform `if` operation unless there is a boolean below \
+                        the two lambdas on top of the stack".to_string())
+                },
+                _ => Err("Cannot perform `if` operation unless there are two lambdas on top of \
+                the stack".to_string()),
+            }
+
+            Under => match (vm.data_stack.pop(), vm.data_stack.pop()) {
+                (Some(Data::Lambda (reference)), Some(top)) => {
+                    let lambda: Function = reference.fetch(&vm.environment);
+                    vm.evaluate(lambda)?;
+                    vm.data_stack.push(top);
+                    Ok(())
+                }
+                _ => Err("Cannot perform `under` operation unless there is a lambda under another \
+                item on top of the stack".to_string()),
+            }
+
+            // --------------------------------------------------------------------------------
+
+            _ => Err (String::from("Combinator not implemented yet."))
+
+        }
+    }
+
+}
+
+
+
+/// Evaluates an arithmetic operation on a `VirtualMachine`
+fn arithmetic_operation(
+    virtual_machine: &mut VirtualMachine,
+    operation: fn(Integer, Integer) -> Integer
+) -> Result<(), String> {
+    let stack: &mut DataStack = &mut virtual_machine.data_stack;
+    if stack.size() < 2 {
+        Err("Not enough items in the stack to perform arithmetic operation".to_string())
+    } else {
+        let (b, a): (Integer, Integer) = match (
+            stack.pop().unwrap(),
+            stack.pop().unwrap()
+        ) {
+            (Data::Integer(b), Data::Integer(a)) => {
+                (b, a)
+            }
+            _ => return Err("Can only perform arithmetic operation on integers".to_string())
+        };
+        stack.push(Data::Integer(operation(a, b)));
+        Ok(())
+    }
+}
+
+
+
+/// Evaluates a Boolean logic operation on
+fn boolean_logic_operation(
+    virtual_machine: &mut VirtualMachine,
+    operation: fn(bool, bool) -> bool,
+) -> Result<(), String> {
+    let stack: &mut DataStack = &mut virtual_machine.data_stack;
+    if stack.size() < 2 {
+        Err("Not enough items in the stack to perform boolean logic operation".to_string())
+    } else {
+        let (b, a): (bool, bool) = match (
+            stack.pop().unwrap(),
+            stack.pop().unwrap()
+        ) {
+            (Data::Boolean(b), Data::Boolean(a)) => {
+                (b, a)
+            }
+            _ => return
+                Err("Can only perform boolean logic operation on booleans".to_string())
+        };
+        stack.push(Data::Boolean(operation(a, b)));
+        Ok(())
+    }
+}
+
+
+
+fn comparison_operation(
+    virtual_machine: &mut VirtualMachine,
+    operation: fn(Data, Data) -> Result<bool, &'static str>,
+) -> Result<(), String> {
+    let stack: &mut DataStack = &mut virtual_machine.data_stack;
+    if stack.size() < 2 {
+        Err("Not enough items in the stack to perform comparison operation".to_string())
+    } else {
+        let (b, a): (Data, Data) = (stack.pop().unwrap(), stack.pop().unwrap());
+        stack.push(Data::Boolean(operation(a, b)?));
+        Ok(())
+    }
 }

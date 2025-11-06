@@ -1,11 +1,19 @@
 // Copyright Rob Gage 2025
 
+mod control_action;
+mod control_stack;
+mod control_frame;
 pub mod data;
 pub mod data_stack;
 mod function;
 pub mod function_storage;
 pub mod terms;
 pub mod combinator;
+
+
+use control_action::ControlAction;
+use control_frame::ControlFrame;
+use control_stack::ControlStack;
 
 use smallvec::SmallVec;
 use std::cell::UnsafeCell;
@@ -60,102 +68,4 @@ impl<'a> VirtualMachine<'a> {
         self
     }
 
-}
-
-
-
-/// Describes how the `VirtualMachine` should manipulate its `ControlStack` after an
-/// evaluation step
-pub enum ControlAction<'a> {
-    /// Does nothing, continues evaluation
-    Continue,
-    /// Halts evaluation, and returns an error
-    Error (String),
-    /// Halts evaluation
-    Halt,
-    /// Pops a `ControlFrame` off the `ControlStack` before continuing evaluation
-    Pop,
-    /// Pushes a new `ControlFrame` to the `ControlStack` before continuing evaluation
-    Push (Function<'a>),
-}
-
-
-
-/// Represents a function being executed
-pub struct ControlFrame<'a> {
-    /// The `Function` that was applied to create this `ControlFrame`
-    pub function: Function<'a>,
-    /// The index of the next term to be evaluated in the `Function`
-    index: UnsafeCell<usize>,
-}
-
-impl<'a> ControlFrame<'a> {
-
-    /// Creates a `ControlFrame` from `Term`s
-    pub const fn from_function(function: Function<'a>) -> Self {
-        Self {
-            function,
-            index: UnsafeCell::new(0),
-        }
-    }
-
-    /// Runs one step in the evaluation process for this `ControlFrame`
-    pub fn run_step(
-        &'a self,
-        data_stack: &mut DataStack,
-        environment: &'a Environment,
-    ) -> ControlAction<'a> {
-        let Some (term) = self.function.body().get(unsafe { *self.index.get() })
-        else { return ControlAction::Pop };
-        match term {
-            Term::Application (reference) => {
-                let function: Function = reference.fetch(environment);
-                ControlAction::Push (function)
-            },
-            Term::Combinator (combinator) => match data_stack.evaluate_combinator(
-                environment,
-                combinator.clone()
-            ) {
-                Ok (_) => {
-                    unsafe { *self.index.get() += 1}
-                    ControlAction::Continue
-                },
-                Err (error) => ControlAction::Error (error.to_string()),
-            },
-            Term::Data (data) => {
-                data_stack.push(data.clone());
-                unsafe { *self.index.get() += 1}
-                ControlAction::Continue
-            },
-            Term::Recursion =>
-                ControlAction::Push (self.function.clone()),
-        }
-    }
-
-}
-
-
-
-/// The stack that stores the `ControlFrame`s used to represent function calls
-pub struct ControlStack<'a> (UnsafeCell<SmallVec<[ControlFrame<'a>; 1024]>>);
-
-impl<'a> ControlStack<'a> {
-
-    /// Create a new `ControlStack`
-    pub fn new() -> Self { Self (UnsafeCell::new(SmallVec::new())) }
-
-    /// Removes the `ControlFrame` from the top of this `ControlStack`
-    pub fn pop_frame(&self) {
-        unsafe { (*self.0.get()).pop(); }
-    }
-
-    /// Adds a new `ControlFrame` to this `ControlStack`
-    pub fn push_frame(&'_ self, frame: ControlFrame<'a>) {
-        unsafe { (*self.0.get()).push(frame); }
-    }
-
-    /// Returns a reference to the `ControlFrame` at the top of this `ControlStack`
-    pub fn top(&'a self) -> Option<&ControlFrame<'a>> {
-        unsafe { (*self.0.get()).last() }
-    }
 }
