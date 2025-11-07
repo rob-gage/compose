@@ -368,17 +368,17 @@ impl Combinator {
 
             // comparison combinators
 
-            // Equality => comparison_operation(stack, |a, b| Ok(a == b)),
+            Equality => comparison_operation(stack, |a, b| Ok(a == b)),
 
-            // GreaterThan => comparison_operation(stack, |a, b| match (a, b) {
-            //     (Data::Integer(a), Data::Integer(b)) => Ok(a > b),
-            //     _ => Err("Can only perform \"greater than\" operation on integers")
-            // }),
+            GreaterThan => comparison_operation(stack, |a, b| match (a, b) {
+                (Value::Integer(a), Value::Integer(b)) => Ok(a > b),
+                _ => Err("Can only perform \"greater than\" operation on integers")
+            }),
 
-            // LessThan => comparison_operation(stack, |a, b| match (a, b) {
-            //     (Data::Integer(a), Data::Integer(b)) => Ok(a < b),
-            //     _ => Err("Can only perform \"less than\" operation on integers")
-            // }),
+            LessThan => comparison_operation(stack, |a, b| match (a, b) {
+                (Value::Integer(a), Value::Integer(b)) => Ok(a < b),
+                _ => Err("Can only perform \"less than\" operation on integers")
+            }),
 
             // functional combinators
 
@@ -492,12 +492,12 @@ fn boolean_logic_operation<'a>(
 fn comparison_operation<'a>(
     stack: &mut DataStack,
     operation: fn(Value, Value) -> Result<bool, &'static str>,
-) -> ControlAction {
+) -> ControlAction<'a> {
     if stack.size() < 2 {
         Error("Not enough items in the stack to perform comparison operation".to_string())
     } else {
         let (b, a): (Value, Value) = (stack.pop().unwrap(), stack.pop().unwrap());
-        stack.push(Value::Boolean(match operation(a, b) {
+        stack.push(Value::Boolean (match operation(a, b) {
             Ok (output) => output,
             Err (error) => return Error (error.to_string())
         }));
