@@ -1,8 +1,5 @@
 // Copyright Rob Gage 2025
 
-mod control_action;
-mod control_stack;
-mod control_frame;
 pub mod data;
 pub mod data_stack;
 mod old_function;
@@ -10,9 +7,11 @@ pub mod function_storage;
 pub mod combinator;
 mod control;
 
-use control_action::ControlAction;
-use control_frame::ControlFrame;
-use control_stack::ControlStack;
+use control::{
+    ControlAction,
+    ControlFrame,
+    ControlStack,
+};
 use data_stack::DataStack;
 use crate::{
     Environment,

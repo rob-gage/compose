@@ -37,6 +37,13 @@ impl<'a> Function<'_> {
             Self::Composed (terms) => terms
         }
     }
+    
+    /// Extends this `Function`'s body with a slice of `Term`s
+    pub fn extended(self, terms: &[Term]) -> Self {
+        let mut body: Vec<Term> = self.body().to_vec();
+        body.extend_from_slice(terms);
+        Self::Composed (body)
+    }
 
 
 }

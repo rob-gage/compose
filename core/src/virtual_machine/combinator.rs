@@ -2,18 +2,17 @@
 
 use crate::{
     Data,
-    DataStack,
     FunctionReference,
     Integer,
     Term,
     VirtualMachine
 };
-use crate::virtual_machine::control_action::ControlAction::Continue;
 use super::{
     ControlAction::{
         self,
         *
     },
+    DataStack,
     Environment,
     Function,
 };
@@ -386,7 +385,7 @@ impl Combinator {
             Apply => {
                 let top: Option<Data> = stack.pop();
                 if let Some (Data::Lambda (reference)) = top {
-                    let lambda: Function = reference.fetch(environment);
+                    let lambda: Function = reference.get(environment);
                     Push (lambda)
                 } else { Error ("Stack must have a lambda on top to be applied".to_string()) }
             },
@@ -404,10 +403,10 @@ impl Combinator {
                 (Some(Data::Lambda (false_reference)), Some(Data::Lambda(true_reference))) =>
                     match stack.pop() {
                         Some(Data::Boolean (boolean)) => if boolean {
-                            let true_lambda: Function = true_reference.fetch(environment);
+                            let true_lambda: Function = true_reference.get(environment);
                             Push (true_lambda)
                         } else {
-                            let false_lambda: Function = false_reference.fetch(environment);
+                            let false_lambda: Function = false_reference.get(environment);
                             Push (false_lambda)
                         }
                     _ => Error ("Cannot perform `if` operation unless there is a boolean below \
@@ -419,7 +418,7 @@ impl Combinator {
 
             Under => match (stack.pop(), stack.pop()) {
                 (Some(Data::Lambda (reference)), Some(top)) => {
-                    let lambda: Function = reference.fetch(environment)
+                    let lambda: Function = reference.get(environment)
                         .extended(&[Term::Data (top)]);
                     Push (lambda)
                 }
