@@ -330,7 +330,7 @@ impl Combinator {
     /// Evaluates this `Combinator` on a `VirtualMachine`
     pub fn evaluate<'a>(
         &self,
-        stack: &'a mut DataStack,
+        stack: &mut DataStack,
         environment: &'a Environment
     ) -> ControlAction<'a> {
         use Combinator::*;
@@ -369,17 +369,17 @@ impl Combinator {
 
             // comparison combinators
 
-            Equality => comparison_operation(stack, |a, b| Ok(a == b)),
+            // Equality => comparison_operation(stack, |a, b| Ok(a == b)),
 
-            GreaterThan => comparison_operation(stack, |a, b| match (a, b) {
-                (Data::Integer(a), Data::Integer(b)) => Ok(a > b),
-                _ => Err("Can only perform \"greater than\" operation on integers")
-            }),
+            // GreaterThan => comparison_operation(stack, |a, b| match (a, b) {
+            //     (Data::Integer(a), Data::Integer(b)) => Ok(a > b),
+            //     _ => Err("Can only perform \"greater than\" operation on integers")
+            // }),
 
-            LessThan => comparison_operation(stack, |a, b| match (a, b) {
-                (Data::Integer(a), Data::Integer(b)) => Ok(a < b),
-                _ => Err("Can only perform \"less than\" operation on integers")
-            }),
+            // LessThan => comparison_operation(stack, |a, b| match (a, b) {
+            //     (Data::Integer(a), Data::Integer(b)) => Ok(a < b),
+            //     _ => Err("Can only perform \"less than\" operation on integers")
+            // }),
 
             // functional combinators
 

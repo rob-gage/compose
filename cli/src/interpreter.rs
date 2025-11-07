@@ -1,5 +1,7 @@
 // Copyright Rob Gage 2025
 
+mod process_command;
+
 use compose_core::{
     Data,
     FunctionReference,

@@ -5,11 +5,10 @@ mod control_stack;
 mod control_frame;
 pub mod data;
 pub mod data_stack;
-mod function;
+mod old_function;
 pub mod function_storage;
 pub mod terms;
 pub mod combinator;
-mod function_reference;
 
 use control_action::ControlAction;
 use control_frame::ControlFrame;
@@ -17,32 +16,57 @@ use control_stack::ControlStack;
 use data_stack::DataStack;
 use terms::Term;
 
-use crate::Environment;
+use crate::{Environment, FunctionReference};
 use std::sync::{
     Arc,
-    RwLock
+    RwLock,
+    RwLockReadGuard,
 };
 
 pub use data::Data;
-pub use function::Function;
+pub use old_function::Function;
 
 /// A virtual machine used for evaluation of Compose programs and functions
-pub struct VirtualMachine<'e> {
-    control_stack: ControlStack<'e>,
+pub struct VirtualMachine<'a> {
+    control_stack: ControlStack<'a>,
     data_stack: DataStack,
-    environment: Arc<RwLock<Environment<'e>>>,
+    environment: Arc<RwLock<Environment<'a>>>,
 }
 
-impl<'e> VirtualMachine<'e> {
+impl<'a> VirtualMachine<'a> {
 
-    /// Evaluates a function using this `VirtualMachine`
-    pub fn evaluate(&'e mut self, function: Function<'e>) -> Result<(), String> {
+    pub fn evaluate<'r>(&mut self, function_reference: FunctionReference) -> Result<(), String> {
+        // lock environment so nothing can write to it until evaluation is finished
+        let guard: RwLockReadGuard<Environment> = self.environment.read().unwrap();
+        let environment: &Environment = &*guard;
+        // push first function to the control stack as a `ControlFrame`
+        let function: Function = function_reference.fetch(environment);
         self.control_stack.push_frame(ControlFrame::from_function(function));
-        self.run()
+        // repeatedly pop frame from stack and do as much evaluation as possible
+        while let Some (mut frame) = self.control_stack.pop_frame() {
+            loop {
+                let action = frame.run_step(&mut self.data_stack, environment);
+                // match frame.run_step(&mut self.data_stack, environment) {
+                //     ControlAction::Continue => continue,
+                //     ControlAction::Error(error) => return Err(*error),
+                //     ControlAction::Pop => break,
+                //     ControlAction::Push(function) => {
+                //         self.control_stack.push_frame(frame);
+                //         self.control_stack.push_frame(ControlFrame::from_function(function));
+                //     },
+                // }
+            }
+        }
+
+        Ok(())
+    }
+
+    fn environment<'guard: 'a>(&self, guard: &'guard RwLockReadGuard<Environment>) -> &'a Environment {
+        &*guard
     }
 
     /// Creates a new `VirtualMachine` from a `&Arc<RwLock<Environment>>`
-    pub fn from_environment(environment: &Arc<RwLock<Environment<'e>>>) -> Self {
+    pub fn from_environment(environment: &Arc<RwLock<Environment<'a>>>) -> Self {
         Self {
             control_stack: ControlStack::new(),
             data_stack: DataStack::new(),
@@ -51,31 +75,29 @@ impl<'e> VirtualMachine<'e> {
     }
 
     /// Runs the `VirtualMachine` to perform the evaluation process
-    fn run(&'e mut self) -> Result<(), String> {
-        let env_guard = self.environment.read().unwrap(); // guard lives here
-        let environment: &Environment = unsafe {
-            let pointer: *const Environment = &*env_guard;
-            &*pointer
-        };
-        loop {
-            let Some (frame) = self.control_stack.top() else { return Ok (()) };
-            loop {
-                let stack: *mut  DataStack = &mut self.data_stack as *mut _;
-                match frame.run_step(unsafe { &mut *stack }, &environment) {
-                    ControlAction::Continue => continue,
-                    ControlAction::Error(error) => return Err(error),
-                    ControlAction::Halt => return Ok(()),
-                    ControlAction::Pop => {
-                        self.control_stack.pop_frame();
-                        break;
-                    }
-                    ControlAction::Push(new_frame) => {
-                        self.control_stack.push_frame(ControlFrame::from_function(new_frame));
-                        break;
-                    }
-                }
-            }
-        }
+    fn run<'b>(&mut self, guard: RwLockReadGuard<'a, Environment<'a>>) -> Result<(), String> {
+        // let environment: &Environment = &*guard;
+        // loop {
+        //     let Some(frame) = self.control_stack.top() else { return Ok(()) };
+        //     loop {
+        //
+        //         let stack: *mut DataStack = &mut self.data_stack as *mut _;
+        //         match frame.run_step(unsafe { &mut *stack }, &environment) {
+        //             ControlAction::Continue => continue,
+        //             ControlAction::Error(error) => return Err(error),
+        //             ControlAction::Halt => return Ok(()),
+        //             ControlAction::Pop => {
+        //                 self.control_stack.pop_frame();
+        //                 break;
+        //             }
+        //             ControlAction::Push(new_frame) => {
+        //                 self.control_stack.push_frame(ControlFrame::from_function(new_frame));
+        //                 break;
+        //             }
+        //         }
+        //     }
+        // }
+        todo!()
     }
 
     /// Returns the data on this `VirtualMachine`s stack as an iterator, starting at the bottom

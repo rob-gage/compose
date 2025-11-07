@@ -26,19 +26,19 @@ use crate::{
 };
 
 /// Allows definition and retrieval of named functions and anonymous functions
-pub struct Namespace<'e> {
+pub struct Namespace {
     /// The `TermBuffer` used to store functions in this namespace
-    environment: Arc<RwLock<Environment<'e>>>,
+    environment: Arc<RwLock<Environment>>,
     /// The indices of defined functions in the function storage mapped by name
     functions_by_name: HashMap<String, FunctionReference>,
     /// The names of functions defined in the `Namespace` mapped by their function index
     names_by_function: HashMap<FunctionReference, String>
 }
 
-impl<'e> Namespace<'e> {
+impl Namespace {
 
     /// Creates a new `VirtualMachine` from this `Namespace`
-    pub fn create_virtual_machine(&self) -> VirtualMachine<'e> {
+    pub fn create_virtual_machine(&self) -> VirtualMachine<'_> {
         VirtualMachine::from_environment(&self.environment)
     }
 
@@ -65,7 +65,7 @@ impl<'e> Namespace<'e> {
     }
 
     /// Displays a term within the context of this `Namespace`
-    pub fn write_term<W: Write>(&'e self, w: &mut W, term: &Term) -> FormatResult {
+    pub fn write_term<W: Write>(&self, w: &mut W, term: &Term) -> FormatResult {
         match term {
             Term::Application (reference) => w.write_str(
                 self.names_by_function.get(&reference)
