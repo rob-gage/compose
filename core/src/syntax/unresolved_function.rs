@@ -5,7 +5,7 @@ use super::{
     UnresolvedTerm
 };
 use pups::*;
-use crate::virtual_machine::terms::Term;
+use crate::term::Term;
 use std::fmt::Debug;
 
 /// An unresolved function that is stored in a `Namespace` until resolution

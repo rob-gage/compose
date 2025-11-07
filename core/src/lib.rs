@@ -4,6 +4,7 @@ mod functions;
 mod integer;
 mod namespace;
 mod syntax;
+mod term;
 mod virtual_machine;
 
 use functions::{
@@ -14,7 +15,7 @@ use functions::{
 use virtual_machine::combinator::Combinator;
 use integer::Integer;
 use syntax::UnresolvedTerm;
-use virtual_machine::terms::Term;
+use term::Term;
 
 pub use virtual_machine::{
     Data,

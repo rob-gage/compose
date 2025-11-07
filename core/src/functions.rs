@@ -22,6 +22,7 @@ impl Environment {
 
 
 /// A `Function` that can be evaluated on a `VirtualMachine`
+#[derive(Clone)]
 pub enum Function<'a> {
     Contiguous (&'a [Term]),
     Composed (Vec<Term>)
@@ -73,6 +74,7 @@ impl FunctionReference {
 
 
 /// Represents a function that is treated as data on the `VirtualMachine`
+#[derive(Clone, Debug, Eq, PartialEq)]
 pub struct LambdaReference (Vec<usize>);
 
 impl LambdaReference {

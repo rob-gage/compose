@@ -7,15 +7,13 @@ pub mod data;
 pub mod data_stack;
 mod old_function;
 pub mod function_storage;
-pub mod terms;
 pub mod combinator;
+mod control;
 
 use control_action::ControlAction;
 use control_frame::ControlFrame;
 use control_stack::ControlStack;
 use data_stack::DataStack;
-use terms::Term;
-
 use crate::{
     Environment,
     Function,

@@ -78,7 +78,7 @@ impl Namespace {
                 Data::Integer (integer) => w.write_str(&integer.to_string()),
                 Data::Lambda (reference) => {
                     w.write_str("( ")?;
-                    for term in reference.fetch(&*self.environment.read().unwrap()).body() {
+                    for term in reference.get(&*self.environment.read().unwrap()).body() {
                         self.write_term(w, term)?;
                         w.write_char(' ')?;
                     }

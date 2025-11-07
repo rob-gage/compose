@@ -1,15 +1,28 @@
 // Copyright Rob Gage 2025
 
-use std::cell::UnsafeCell;
-use crate::Environment;
-use super::{
-    ControlStack,
-    DataStack,
+use crate::{
+    Environment,
     Function,
-    ControlAction,
     Term,
-    VirtualMachine,
 };
+use smallvec::SmallVec;
+use super::DataStack;
+
+
+/// Describes how the `VirtualMachine` should manipulate its `ControlStack` after an
+/// evaluation step
+pub enum ControlAction<'vm> {
+    /// Does nothing, continues evaluation
+    Continue,
+    /// Halts evaluation, and returns an error
+    Error (String),
+    /// Pops a `ControlFrame` off the `ControlStack` before continuing evaluation
+    Pop,
+    /// Pushes a new `ControlFrame` to the `ControlStack` before continuing evaluation
+    Push (Function<'vm>),
+}
+
+
 
 /// Represents a function being executed
 pub struct ControlFrame<'vm> {
@@ -34,7 +47,7 @@ impl<'a> ControlFrame<'a> {
         else { return ControlAction::Pop };
         let action: ControlAction = match term {
             Term::Application (reference) => {
-                let function: Function = reference.fetch(environment);
+                let function: Function = reference.get(environment);
                 ControlAction::Push (function)
             },
             Term::Combinator (combinator) => combinator.evaluate(data_stack, environment),
@@ -46,5 +59,23 @@ impl<'a> ControlFrame<'a> {
         };
         action
     }
+
+}
+
+
+
+/// The stack that stores the `ControlFrame`s used to represent function calls
+pub struct ControlStack<'a> (SmallVec<[ControlFrame<'a>; 1024]>);
+
+impl<'a> ControlStack<'a> {
+
+    /// Create a new `ControlStack`
+    pub fn new() -> Self { Self (SmallVec::new()) }
+
+    /// Removes the `ControlFrame` from the top of this `ControlStack`
+    pub fn pop_frame(&mut self) -> Option<ControlFrame<'a>> { self.0.pop() }
+
+    /// Adds a new `ControlFrame` to this `ControlStack`
+    pub fn push_frame(&mut self, frame: ControlFrame<'a>) { self.0.push(frame) }
 
 }

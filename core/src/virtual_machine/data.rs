@@ -3,11 +3,6 @@
 use crate::{
     LambdaReference,
     Integer,
-    Namespace,
-};
-use std::fmt::{
-    Result as FormatResult,
-    Write
 };
 
 /// Data that can be stored on the `Stack`

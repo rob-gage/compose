@@ -4,11 +4,6 @@ use crate::{
     Combinator,
     FunctionReference,
     Data,
-    DataStack
-};
-use std::{
-    iter::repeat,
-    marker::PhantomData,
 };
 
 /// A concatenative programming term that can represent data or operations
