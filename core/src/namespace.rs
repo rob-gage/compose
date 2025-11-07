@@ -38,7 +38,7 @@ pub struct Namespace {
 impl Namespace {
 
     /// Creates a new `VirtualMachine` from this `Namespace`
-    pub fn create_virtual_machine(&self) -> VirtualMachine<'_> {
+    pub fn create_virtual_machine(&self) -> VirtualMachine {
         VirtualMachine::from_environment(&self.environment)
     }
 

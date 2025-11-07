@@ -38,7 +38,7 @@ impl<'a> ControlFrame<'a> {
     pub const fn from_function(function: Function<'a>) -> Self { Self { function, index: 0, } }
 
     /// Runs one step in the evaluation process for this `ControlFrame`
-    pub fn run_step(
+    pub fn execute_step(
         &mut self,
         data_stack: &mut DataStack,
         environment: &'a Environment,
