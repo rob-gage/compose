@@ -64,7 +64,7 @@ impl Namespace {
         }
     }
 
-    /// Displays a term within the context of this `Namespace`
+    /// Displays a `Term` within the context of this `Namespace`
     pub fn write_term<W: Write>(&self, w: &mut W, term: &Term) -> FormatResult {
         match term {
             Term::Application (reference) => w.write_str(
@@ -73,27 +73,32 @@ impl Namespace {
                    in this `Namespace`")
             ),
             Term::Combinator (combinator) => w.write_str(combinator.name()),
-            Term::Data (data) => match data {
-                Value::Boolean (boolean) => w.write_str(if *boolean { "true" } else { "false" }),
-                Value::Integer (integer) => w.write_str(&integer.to_string()),
-                Value::Lambda (reference) => {
-                    w.write_str("( ")?;
-                    for term in reference.get(&*self.environment.read().unwrap()).body() {
-                        self.write_term(w, term)?;
-                        w.write_char(' ')?;
-                    }
-                    w.write_char(')')
-                },
-                Value::List (items) => {
-                    w.write_str("[ ")?;
-                    for item in items {
-                        self.write_term(w, &Term::Data (data.clone()))?;
-                        w.write_char(' ')?;
-                    }
-                    w.write_char(']')
-                }
-            },
+            Term::Data (value) => self.write_value(w, value),
             Term::Recursion => w.write_str("@"),
+        }
+    }
+
+    /// Displays a `Value` within the context of this `Namespace`
+    pub fn write_value<W: Write>(&self, w: &mut W, value: &Value) -> FormatResult {
+        match value {
+            Value::Boolean (boolean) => w.write_str(if *boolean { "true" } else { "false" }),
+            Value::Integer (integer) => w.write_str(&integer.to_string()),
+            Value::Lambda (reference) => {
+                w.write_str("( ")?;
+                for term in reference.get(&*self.environment.read().unwrap()).body() {
+                    self.write_term(w, term)?;
+                    w.write_char(' ')?;
+                }
+                w.write_char(')')
+            },
+            Value::List (items) => {
+                w.write_str("[ ")?;
+                for item in items {
+                    self.write_value(w, value)?;
+                    w.write_char(' ')?;
+                }
+                w.write_char(']')
+            }
         }
     }
 

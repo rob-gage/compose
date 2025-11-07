@@ -3,12 +3,20 @@
 use crate::{
     LambdaReference,
     Integer,
+    Namespace,
 };
 use smallvec::{
     SmallVec,
     smallvec,
 };
-use std::cell::UnsafeCell;
+use std::{
+    cell::UnsafeCell,
+    fmt::{
+        Formatter,
+        Result as FormatResult,
+        Write,
+    }
+};
 
 /// Data that can be stored on the `Stack`
 #[derive(Clone, Debug, PartialEq, Eq)]
