@@ -16,7 +16,10 @@ use control_stack::ControlStack;
 use data_stack::DataStack;
 use terms::Term;
 
-use crate::{Environment, FunctionReference};
+use crate::{
+    Environment,
+    Function,
+};
 use std::sync::{
     Arc,
     RwLock,
@@ -24,16 +27,14 @@ use std::sync::{
 };
 
 pub use data::Data;
-pub use old_function::Function;
 
 /// A virtual machine used for evaluation of Compose programs and functions
-pub struct VirtualMachine<'a> {
-    control_stack: ControlStack<'a>,
+pub struct VirtualMachine {
     data_stack: DataStack,
-    environment: Arc<RwLock<Environment<'a>>>,
+    environment: Arc<RwLock<Environment>>,
 }
 
-impl<'a> VirtualMachine<'a> {
+impl VirtualMachine {
 
     pub fn evaluate<'r>(&mut self, function_reference: FunctionReference) -> Result<(), String> {
         // lock environment so nothing can write to it until evaluation is finished
