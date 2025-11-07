@@ -385,7 +385,9 @@ impl Combinator {
             Apply => {
                 let top: Option<Value> = stack.pop();
                 if let Some (Value::Lambda (reference)) = top {
+                    println!("{:?}", reference);
                     let lambda: Function = reference.get(environment);
+                    println!("{:?}", lambda.body());
                     Push (lambda)
                 } else { Error ("Stack must have a lambda on top to be applied".to_string()) }
             },

@@ -126,14 +126,14 @@ fn resolve(
                 } else { undefined.insert(unresolved_name.to_string()); },
             // resolve lambdas
             UnresolvedLambda (lambda_body) => {
-                let reference: FunctionReference
+                let lambda_reference: FunctionReference
                     = FunctionReference::reserve(environment);
                 let lambda: Value = Value::Lambda (
-                    match resolve(environment ,functions_by_name, function_reference, lambda_body) {
-                        Ok (_) => LambdaReference::from_function(reference),
+                    match resolve(environment, functions_by_name, lambda_reference, lambda_body) {
+                        Ok (_) => LambdaReference::from_function(lambda_reference),
                         Err (lambda_undefined) => {
                             undefined.extend(lambda_undefined);
-                            LambdaReference::from_function(reference)
+                            LambdaReference::from_function(lambda_reference)
                         }
                     }
                 );
