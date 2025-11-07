@@ -1,7 +1,7 @@
 // Copyright Rob Gage 2025
 
 use crate::{
-    Data,
+    Value,
     FunctionReference,
     Integer,
     Term,
@@ -354,8 +354,8 @@ impl Combinator {
             ExclusiveOr => boolean_logic_operation(stack, |a, b| a ^ b),
 
             Not => if let Some(top) = stack.pop() {
-                if let Data::Boolean(boolean) = top {
-                    stack.push(Data::Boolean(!boolean));
+                if let Value::Boolean(boolean) = top {
+                    stack.push(Value::Boolean(!boolean));
                     Continue
                 } else {
                     Error ("Can only perform boolean \"not\" operation on boolean data".to_string())
@@ -383,16 +383,16 @@ impl Combinator {
             // functional combinators
 
             Apply => {
-                let top: Option<Data> = stack.pop();
-                if let Some (Data::Lambda (reference)) = top {
+                let top: Option<Value> = stack.pop();
+                if let Some (Value::Lambda (reference)) = top {
                     let lambda: Function = reference.get(environment);
                     Push (lambda)
                 } else { Error ("Stack must have a lambda on top to be applied".to_string()) }
             },
 
             Compose => match (stack.pop(), stack.pop()) {
-                (Some(Data::Lambda (a_reference)), Some(Data::Lambda(b_reference))) => {
-                    stack.push(Data::Lambda (a_reference.compose(b_reference)));
+                (Some(Value::Lambda (a_reference)), Some(Value::Lambda(b_reference))) => {
+                    stack.push(Value::Lambda (a_reference.compose(b_reference)));
                     Continue
                 }
                 _ => Error ("Cannot perform `compose` operation unless there are two lambdas on \
@@ -400,9 +400,9 @@ impl Combinator {
             }
 
             If => match (stack.pop(), stack.pop()) {
-                (Some(Data::Lambda (false_reference)), Some(Data::Lambda(true_reference))) =>
+                (Some(Value::Lambda (false_reference)), Some(Value::Lambda(true_reference))) =>
                     match stack.pop() {
-                        Some(Data::Boolean (boolean)) => if boolean {
+                        Some(Value::Boolean (boolean)) => if boolean {
                             let true_lambda: Function = true_reference.get(environment);
                             Push (true_lambda)
                         } else {
@@ -417,7 +417,7 @@ impl Combinator {
             }
 
             Under => match (stack.pop(), stack.pop()) {
-                (Some(Data::Lambda (reference)), Some(top)) => {
+                (Some(Value::Lambda (reference)), Some(top)) => {
                     let lambda: Function = reference.get(environment)
                         .extended(&[Term::Data (top)]);
                     Push (lambda)
@@ -450,13 +450,13 @@ fn arithmetic_operation<'a>(
             stack.pop().unwrap(),
             stack.pop().unwrap()
         ) {
-            (Data::Integer(b), Data::Integer(a)) => {
+            (Value::Integer(b), Value::Integer(a)) => {
                 (b, a)
             }
             _ => return Error("Can only perform arithmetic operation on integers"
                 .to_string())
         };
-        stack.push(Data::Integer(operation(a, b)));
+        stack.push(Value::Integer(operation(a, b)));
         Continue
     }
 }
@@ -476,13 +476,13 @@ fn boolean_logic_operation<'a>(
             stack.pop().unwrap(),
             stack.pop().unwrap()
         ) {
-            (Data::Boolean(b), Data::Boolean(a)) => {
+            (Value::Boolean(b), Value::Boolean(a)) => {
                 (b, a)
             }
             _ => return ControlAction::Error("Can only perform boolean logic operation on booleans"
                 .to_string())
         };
-        stack.push(Data::Boolean(operation(a, b)));
+        stack.push(Value::Boolean(operation(a, b)));
         ControlAction::Continue
     }
 }
@@ -491,13 +491,13 @@ fn boolean_logic_operation<'a>(
 
 fn comparison_operation<'a>(
     stack: &mut DataStack,
-    operation: fn(Data, Data) -> Result<bool, &'static str>,
+    operation: fn(Value, Value) -> Result<bool, &'static str>,
 ) -> ControlAction {
     if stack.size() < 2 {
         Error("Not enough items in the stack to perform comparison operation".to_string())
     } else {
-        let (b, a): (Data, Data) = (stack.pop().unwrap(), stack.pop().unwrap());
-        stack.push(Data::Boolean(match operation(a, b) {
+        let (b, a): (Value, Value) = (stack.pop().unwrap(), stack.pop().unwrap());
+        stack.push(Value::Boolean(match operation(a, b) {
             Ok (output) => output,
             Err (error) => return Error (error.to_string())
         }));

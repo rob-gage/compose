@@ -12,13 +12,13 @@ use functions::{
     Function,
     LambdaReference,
 };
-use virtual_machine::combinator::Combinator;
+use virtual_machine::Combinator;
 use integer::Integer;
 use syntax::UnresolvedTerm;
 use term::Term;
 
 pub use virtual_machine::{
-    Data,
+    Value,
     VirtualMachine,
 };
 

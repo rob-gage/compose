@@ -3,7 +3,7 @@
 use crate::{
     Combinator,
     FunctionReference,
-    Data,
+    Value,
 };
 
 /// A concatenative programming term that can represent data or operations
@@ -20,7 +20,7 @@ where
     Combinator (Combinator),
 
     /// Data as a term that will be pushed to the `Stack`
-    Data (Data),
+    Data (Value),
 
     Recursion,
 

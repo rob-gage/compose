@@ -3,7 +3,7 @@
 mod process_command;
 
 use compose_core::{
-    Data,
+    Value,
     FunctionReference,
     Namespace,
     UnresolvedFunction,
@@ -19,14 +19,14 @@ use rustyline::{
 use std::process::exit;
 
 /// An interpreter for the `Compose` language
-pub struct Interpreter<'a> {
+pub struct Interpreter {
     /// The `Namespace` used by this `Interpreter`
-    namespace: Namespace<'a>,
+    namespace: Namespace,
     /// The `VirtualMachine` used by this `Interpreter`
-    virtual_machine: VirtualMachine<'a>
+    virtual_machine: VirtualMachine
 }
 
-impl<'a> Interpreter<'a> {
+impl Interpreter {
 
     /// Creates a new `Interpreter`
     pub fn new() -> Self {

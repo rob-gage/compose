@@ -1,9 +1,6 @@
 // Copyright Rob Gage 2025
 
 pub mod data;
-pub mod data_stack;
-mod old_function;
-pub mod function_storage;
 pub mod combinator;
 mod control;
 
@@ -12,7 +9,7 @@ use control::{
     ControlFrame,
     ControlStack,
 };
-use data_stack::DataStack;
+use data::DataStack;
 use crate::{
     Environment,
     Function,
@@ -24,7 +21,8 @@ use std::sync::{
     RwLockReadGuard,
 };
 
-pub use data::Data;
+pub use combinator::Combinator;
+pub use data::Value;
 
 /// A virtual machine used for evaluation of Compose programs and functions
 pub struct VirtualMachine {
@@ -71,12 +69,12 @@ impl VirtualMachine {
 
     /// Returns the data on this `VirtualMachine`s stack as an iterator, starting at the bottom
     /// of the stack
-    pub fn data(&self) -> impl IntoIterator<Item = Data> {
+    pub fn data(&self) -> impl IntoIterator<Item =Value> {
         self.data_stack.items()
     }
 
     /// Adds data to the stack of this `VirtualMachine`
-    pub fn with_data(mut self, data: &[Data]) -> Self {
+    pub fn with_data(mut self, data: &[Value]) -> Self {
         for item in data {
             self.data_stack.push(item.clone());
         }

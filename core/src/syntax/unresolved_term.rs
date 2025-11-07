@@ -2,7 +2,7 @@
 
 use crate::{
     Combinator,
-    Data,
+    Value,
     Integer,
     Term
 };
@@ -59,8 +59,8 @@ fn application(input: &Text) -> ParseResult<UnresolvedTerm> {
 /// Parses a boolean term
 fn boolean(input: &Text) -> ParseResult<UnresolvedTerm> {
     choice([
-        token("true").emit(UnresolvedTerm::Resolved (Term::Data (Data::Boolean (true)))),
-        token("false").emit(UnresolvedTerm::Resolved (Term::Data (Data::Boolean (false)))),
+        token("true").emit(UnresolvedTerm::Resolved (Term::Data (Value::Boolean (true)))),
+        token("false").emit(UnresolvedTerm::Resolved (Term::Data (Value::Boolean (false)))),
     ])
         .parse(input)
 }
@@ -122,7 +122,7 @@ fn lambda(input: &Text) -> ParseResult<UnresolvedTerm> {
 fn integer(input: &Text) -> ParseResult<UnresolvedTerm> {
     number()
         .trace("`integer` parser function")
-        .map(|number| UnresolvedTerm::Resolved (Term::Data (Data::Integer (
+        .map(|number| UnresolvedTerm::Resolved (Term::Data (Value::Integer (
             Integer::from_string(number).expect("Parser will never parse an invalid integer")
         ))))
         .parse(input)

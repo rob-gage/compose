@@ -15,7 +15,7 @@ use std::{
     }
 };
 use crate::{
-    Data,
+    Value,
     Environment,
     FunctionReference,
     LambdaReference,
@@ -74,9 +74,9 @@ impl Namespace {
             ),
             Term::Combinator (combinator) => w.write_str(combinator.name()),
             Term::Data (data) => match data {
-                Data::Boolean (boolean) => w.write_str(if *boolean { "true" } else { "false" }),
-                Data::Integer (integer) => w.write_str(&integer.to_string()),
-                Data::Lambda (reference) => {
+                Value::Boolean (boolean) => w.write_str(if *boolean { "true" } else { "false" }),
+                Value::Integer (integer) => w.write_str(&integer.to_string()),
+                Value::Lambda (reference) => {
                     w.write_str("( ")?;
                     for term in reference.get(&*self.environment.read().unwrap()).body() {
                         self.write_term(w, term)?;
@@ -84,7 +84,7 @@ impl Namespace {
                     }
                     w.write_char(')')
                 },
-                Data::List (items) => {
+                Value::List (items) => {
                     w.write_str("[ ")?;
                     for item in items {
                         self.write_term(w, &Term::Data (data.clone()))?;
@@ -123,7 +123,7 @@ fn resolve(
             UnresolvedLambda (lambda_body) => {
                 let reference: FunctionReference
                     = FunctionReference::reserve(environment);
-                let lambda: Data = Data::Lambda (
+                let lambda: Value = Value::Lambda (
                     match resolve(environment ,functions_by_name, function_reference, lambda_body) {
                         Ok (_) => LambdaReference::from_function(reference),
                         Err (lambda_undefined) => {
