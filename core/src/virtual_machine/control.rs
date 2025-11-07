@@ -43,8 +43,7 @@ impl<'a> ControlFrame<'a> {
         data_stack: &mut DataStack,
         environment: &'a Environment,
     ) -> ControlAction<'a> {
-        let Some (term) = self.function.body().get(self.index)
-        else { return ControlAction::Pop };
+        let Some (term) = self.function.body().get(self.index) else { return ControlAction::Pop };
         let action: ControlAction = match term {
             Term::Application (reference) => {
                 let function: Function = reference.get(environment);
@@ -57,6 +56,7 @@ impl<'a> ControlFrame<'a> {
             },
             Term::Recursion => ControlAction::Push (self.function.clone()),
         };
+        self.index += 1;
         action
     }
 

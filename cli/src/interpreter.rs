@@ -87,8 +87,11 @@ impl Interpreter {
                     // evaluate free terms
                     match self.virtual_machine.evaluate(function) {
                         Ok (_) => {
-                            let mut printed_stack: String = String::new();
-                            self.stack.write_stack(&mut printed_stack, &self.namespace).unwrap();
+                            let mut printed_stack: String = "\n    ".to_string();
+                            for value in self.virtual_machine.data() {
+                                self.namespace.write_value(&mut printed_stack, &value).unwrap();
+                                printed_stack.push_str("  ");
+                            }
                             println!("\n{}\n", printed_stack);
                         },
                         Err (error) => eprintln!("Error: {}", error)

@@ -42,10 +42,14 @@ impl VirtualMachine {
         control_stack.push_frame(ControlFrame::from_function(function));
         // repeatedly pop frame from stack and do as much evaluation as possible
         while let Some (mut frame) = control_stack.pop_frame() {
+            println!("Running frame");
             loop {
                 let action = frame.execute_step(&mut self.data_stack, environment);
                 match action {
-                    ControlAction::Continue => continue,
+                    ControlAction::Continue => {
+                        println!("continuing");
+                        continue
+                    },
                     ControlAction::Error(error) => return Err(error),
                     ControlAction::Pop => break,
                     ControlAction::Push(function) => {
