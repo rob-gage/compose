@@ -51,7 +51,10 @@ impl Interpreter {
                         exit(0)
                     }
                     // resets the `Interpreter`
-                    "!reset" => *self = Self::new(),
+                    "!reset" => {
+                        *self = Self::new();
+                        return;
+                    },
                     _ => {}
                 };
                 let input: Text = Text::from_string(input);

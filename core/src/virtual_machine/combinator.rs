@@ -2,11 +2,10 @@
 
 use crate::{
     Value,
-    FunctionReference,
     Integer,
     Term,
-    VirtualMachine
 };
+use std::mem::swap;
 use super::{
     ControlAction::{
         self,
@@ -426,6 +425,51 @@ impl Combinator {
                 }
                 _ => Error ("Cannot perform `under` operation unless there is a lambda under \
                 another item on top of the stack".to_string()),
+            }
+            
+            // stack manipulation combinators
+
+            Copy => if let Some(top) = stack.get_from_top(0) {
+                stack.push(top.clone());
+                Continue
+            } else { Error ("No items the in stack to be copied".to_string()) },
+    
+            Drop => {
+                if let Some(top) = stack.pop() {
+                    Continue
+                } else { Error ("No items in the stack to be dropped".to_string()) }
+            },
+    
+            Hop => {
+                if let Some(top) = stack.get_from_top(1) {
+                    stack.push(top.clone());
+                    Continue
+                } else { Error ("Not enough items in the stack to be hopped".to_string()) }
+            },
+    
+            Rotate => {
+                if stack.size() < 3 {
+                    Error ("Not enough items in the stack to rotate".to_string())
+                } else {
+                    let a: &mut Value = stack.get_mutable_from_top(2).unwrap();
+                    let b: &mut Value = stack.get_mutable_from_top(1).unwrap();
+                    let c: &mut Value = stack.get_mutable_from_top(0).unwrap();
+                    swap(a, c);
+                    swap(b, c);
+                    Continue
+                }
+            },
+    
+            Swap => {
+                if stack.size() < 2 {
+                    Error ("Not enough items in the stack to swap".to_string())
+                } else {
+                    swap(
+                        stack.get_mutable_from_top(0).unwrap(),
+                        stack.get_mutable_from_top(1).unwrap(),
+                    );
+                    Continue
+                }
             }
 
             // --------------------------------------------------------------------------------
