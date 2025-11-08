@@ -1,5 +1,6 @@
 // Copyright Rob Gage 2025
 
+use std::fmt::format;
 use crate::{
     Combinator,
     Value,
@@ -29,8 +30,8 @@ impl UnresolvedTerm {
         choice([
             lambda,
             boolean,
-            combinator,
             integer,
+            combinator,
             application,
         ])
             .parse(input)
@@ -99,6 +100,7 @@ fn combinator(input: &Text) -> ParseResult<UnresolvedTerm> {
         combinator_parser(Copy),
         combinator_parser(Drop),
         combinator_parser(Hop),
+        combinator_parser(Pick),
         combinator_parser(Rotate),
         combinator_parser(Swap),
     ])
@@ -120,10 +122,14 @@ fn lambda(input: &Text) -> ParseResult<UnresolvedTerm> {
 
 /// Parses an integer term
 fn integer(input: &Text) -> ParseResult<UnresolvedTerm> {
-    number()
+    choice([
+        token("-").then(number()),
+        token("").then(number()),
+    ])
         .trace("`integer` parser function")
-        .map(|number| UnresolvedTerm::Resolved (Term::Data (Value::Integer (
-            Integer::from_string(number).expect("Parser will never parse an invalid integer")
+        .map(|(sign, number)| UnresolvedTerm::Resolved (Term::Data (Value::Integer (
+            Integer::from_string(&format!("{}{}", sign, number))
+                .expect("Parser will never parse an invalid integer")
         ))))
         .parse(input)
 }
