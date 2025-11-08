@@ -306,6 +306,14 @@ combinators! {
     Hop
     ; "hop",
 
+    /// ## Pick
+    ///
+    /// `c ... # -> ... c`
+    ///
+    /// Pushes a copy of an item at a specified index on the stack
+    Pick
+    ; "pick",
+
     /// ## Rotate
     ///
     /// `a b c -> c a b`
@@ -434,42 +442,42 @@ impl Combinator {
                 Continue
             } else { Error ("No items the in stack to be copied".to_string()) },
     
-            Drop => {
-                if let Some(top) = stack.pop() {
-                    Continue
-                } else { Error ("No items in the stack to be dropped".to_string()) }
+            Drop => if let Some(_) = stack.pop() {
+                Continue
+            } else { Error ("No items in the stack to be dropped".to_string()) },
+    
+            Hop => if let Some(top) = stack.get_from_top(1) {
+                stack.push(top.clone());
+                Continue
+            } else { Error ("Not enough items in the stack to be hopped".to_string()) },
+
+            Pick => if let Some (Value::Integer (integer)) = stack.pop() {
+                let Some (indexed) = stack.get_from_top(integer.as_stack_index(stack.size()))
+                else { return Error ("Cannot perform `pick` on an empty stack.".to_string()); } ;
+                stack.push(indexed.clone());
+                Continue
+            } else { Error ("Missing integer on top of the stack to represent index for `pick` \
+            operation".to_string()) },
+    
+            Rotate => if stack.size() < 3 {
+                Error ("Not enough items in the stack to rotate".to_string())
+            } else {
+                let a: &mut Value = stack.get_mutable_from_top(2).unwrap();
+                let b: &mut Value = stack.get_mutable_from_top(1).unwrap();
+                let c: &mut Value = stack.get_mutable_from_top(0).unwrap();
+                swap(a, c);
+                swap(b, c);
+                Continue
             },
     
-            Hop => {
-                if let Some(top) = stack.get_from_top(1) {
-                    stack.push(top.clone());
-                    Continue
-                } else { Error ("Not enough items in the stack to be hopped".to_string()) }
-            },
-    
-            Rotate => {
-                if stack.size() < 3 {
-                    Error ("Not enough items in the stack to rotate".to_string())
-                } else {
-                    let a: &mut Value = stack.get_mutable_from_top(2).unwrap();
-                    let b: &mut Value = stack.get_mutable_from_top(1).unwrap();
-                    let c: &mut Value = stack.get_mutable_from_top(0).unwrap();
-                    swap(a, c);
-                    swap(b, c);
-                    Continue
-                }
-            },
-    
-            Swap => {
-                if stack.size() < 2 {
-                    Error ("Not enough items in the stack to swap".to_string())
-                } else {
-                    swap(
-                        stack.get_mutable_from_top(0).unwrap(),
-                        stack.get_mutable_from_top(1).unwrap(),
-                    );
-                    Continue
-                }
+            Swap => if stack.size() < 2 {
+                Error ("Not enough items in the stack to swap".to_string())
+            } else {
+                swap(
+                    stack.get_mutable_from_top(0).unwrap(),
+                    stack.get_mutable_from_top(1).unwrap(),
+                );
+                Continue
             }
 
             // --------------------------------------------------------------------------------

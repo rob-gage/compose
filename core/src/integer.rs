@@ -1,6 +1,7 @@
 // Copyright Rob Gage 2025
 
 use num_bigint::BigInt;
+use num_traits::ToPrimitive;
 use std::{
     ops::{
         Add,
@@ -27,6 +28,16 @@ impl Integer {
     /// Returns the `Integer` as a `String`
     pub fn to_string(&self) -> String {
         self.0.to_string()
+    }
+
+
+    /// Returns this `Integer` as a `usize` index (from top) for an item on a stack with a given
+    /// size, returning `usize::MAX` as a sentinel value indicating no items in the stack
+    pub fn as_stack_index(&self, stack_size: usize) -> usize {
+        if stack_size == 0 { return usize::MAX; }
+        let size: BigInt = BigInt::from(stack_size);
+        let index: BigInt = (&self.0 % &size + &size) % &size;
+        index.to_usize().unwrap_or(usize::MAX)
     }
 
 }

@@ -158,6 +158,7 @@ version = "0.0.0"
 dependencies = [
  "codespan-reporting",
  "num-bigint",
+ "num-traits",
  "pups",
  "smallvec",
 ]
