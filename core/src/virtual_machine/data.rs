@@ -9,14 +9,7 @@ use smallvec::{
     SmallVec,
     smallvec,
 };
-use std::{
-    cell::UnsafeCell,
-    fmt::{
-        Formatter,
-        Result as FormatResult,
-        Write,
-    }
-};
+use std::cell::UnsafeCell;
 
 /// Data that can be stored on the `Stack`
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -86,12 +79,22 @@ impl DataStack {
     
     /// Pops a `Value` off the array
     pub fn pop(&mut self) -> Option<Value> {
-        if self.top == 0 {
-            return None;
-        }
+        if self.top == 0 { return None; }
         self.top -= 1;
         unsafe {
             Some((*self.buffer.get()).pop().unwrap())
+        }
+    }
+
+    /// Pops the slice starting at a certain index from the top of the stack
+    /// (`0` is the index for the top)
+    pub fn pop_slice(&mut self, index: usize) -> Option<Vec<Value>> {
+        if index > self.top { return None };
+        let slice_start: usize = self.top - index;
+        self.top = slice_start;
+        unsafe {
+            let buffer = &mut *self.buffer.get();
+            Some(buffer.drain(slice_start..).collect())
         }
     }
     

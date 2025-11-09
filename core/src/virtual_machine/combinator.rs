@@ -203,6 +203,15 @@ combinators! {
 
     /// ## Under
     ///
+    /// `a ... |f| # -> a ...`
+    ///
+    /// Consumes an index, from the top of the stack, and a lambda below it, and applies the lambda
+    /// at the index (after consuming the lambda)
+    Deep
+    ; "deep",
+
+    /// ## Under
+    ///
     /// `a b |f| -> a ... b`
     ///
     /// Applies the function on top of the stack to the second value from the top of the stack
@@ -302,7 +311,7 @@ combinators! {
     ///
     /// `a b -> a b a`
     ///
-    /// Pushes a duplicate of the second value from top of the stack to top of the stack
+    /// Pushes a duplicate of the second value from top of the stack
     Hop
     ; "hop",
 
@@ -310,7 +319,8 @@ combinators! {
     ///
     /// `c ... # -> ... c`
     ///
-    /// Pushes a copy of an item at a specified index on the stack
+    /// Consumes an index from the top of the stack, and then pushes a duplicate of the item at that
+    /// index
     Pick
     ; "pick",
 
@@ -392,20 +402,31 @@ impl Combinator {
             Apply => {
                 let top: Option<Value> = stack.pop();
                 if let Some (Value::Lambda (reference)) = top {
-                    println!("{:?}", reference);
                     let lambda: Function = reference.get(environment);
-                    println!("{:?}", lambda.body());
                     Push (lambda)
                 } else { Error ("Stack must have a lambda on top to be applied".to_string()) }
             },
 
             Compose => match (stack.pop(), stack.pop()) {
-                (Some(Value::Lambda (a_reference)), Some(Value::Lambda(b_reference))) => {
+                (Some (Value::Lambda (a_reference)), Some (Value::Lambda (b_reference))) => {
                     stack.push(Value::Lambda (a_reference.compose(b_reference)));
                     Continue
                 }
                 _ => Error ("Cannot perform `compose` operation unless there are two lambdas on \
                 top of the stack".to_string()),
+            }
+
+            Deep => match (stack.pop(), stack.pop()) {
+                (Some (Value::Integer (integer)), Some (Value::Lambda (reference))) => {
+                    if let Some (terms) = stack.pop_slice(integer.as_stack_index(stack.size())) {
+                        let lambda: Function = reference.get(environment)
+                            .extended_with_data(&terms);
+                        Push (lambda)
+                    } else { Error ("Cannot perform `deep` operation unless there is an index on \
+                    top of the stack, and a lambda below it".to_string()) }
+                }
+                _ => Error ("Cannot perform `deep` operation unless there is an index on \
+                    top of the stack, and a lambda below it".to_string())
             }
 
             If => match (stack.pop(), stack.pop()) {
@@ -428,7 +449,7 @@ impl Combinator {
             Under => match (stack.pop(), stack.pop()) {
                 (Some(Value::Lambda (reference)), Some(top)) => {
                     let lambda: Function = reference.get(environment)
-                        .extended(&[Term::Data (top)]);
+                        .extended_with_data(&[top]);
                     Push (lambda)
                 }
                 _ => Error ("Cannot perform `under` operation unless there is a lambda under \
@@ -523,7 +544,7 @@ fn boolean_logic_operation<'a>(
     operation: fn(bool, bool) -> bool,
 ) -> ControlAction<'a> {
     if stack.size() < 2 {
-        ControlAction::Error ("Not enough items in the stack to perform boolean logic operation"
+        Error ("Not enough items in the stack to perform boolean logic operation"
             .to_string())
     } else {
         let (b, a): (bool, bool) = match (
@@ -533,11 +554,11 @@ fn boolean_logic_operation<'a>(
             (Value::Boolean(b), Value::Boolean(a)) => {
                 (b, a)
             }
-            _ => return ControlAction::Error("Can only perform boolean logic operation on booleans"
+            _ => return Error("Can only perform boolean logic operation on booleans"
                 .to_string())
         };
         stack.push(Value::Boolean(operation(a, b)));
-        ControlAction::Continue
+        Continue
     }
 }
 

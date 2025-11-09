@@ -94,6 +94,7 @@ fn combinator(input: &Text) -> ParseResult<UnresolvedTerm> {
         // functional
         combinator_parser(Apply),
         combinator_parser(Compose),
+        combinator_parser(Deep),
         combinator_parser(If),
         combinator_parser(Under),
         // stack manipulation

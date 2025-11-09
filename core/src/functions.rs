@@ -1,6 +1,10 @@
 // Copyright Rob Gage 2025
 
-use crate::Term;
+use smallvec::ExtendFromSlice;
+use crate::{
+    Term,
+    Value,
+};
 
 
 
@@ -39,13 +43,12 @@ impl<'a> Function<'_> {
     }
     
     /// Extends this `Function`'s body with a slice of `Term`s
-    pub fn extended(self, terms: &[Term]) -> Self {
+    pub fn extended_with_data(self, data: &[Value]) -> Self {
         let mut body: Vec<Term> = self.body().to_vec();
-        body.extend_from_slice(terms);
+        body.extend(data.iter().map(|value| Term::Data (value.clone())));
         Self::Composed (body)
     }
-
-
+    
 }
 
 
