@@ -40,7 +40,7 @@ impl Interpreter {
 
     /// Runs one iteration of the main `Interpreter` loop
     fn read_evaluate_print(&mut self, editor: &mut Editor<(), DefaultHistory>) {
-        match editor.readline("  » ") {
+        match editor.readline("  λ> ") {
             Ok (input) => {
                 let input: &str = input.trim();
                 // execute interpreter commands
@@ -60,8 +60,7 @@ impl Interpreter {
                 let input: Text = Text::from_string(input);
                 let result: ParseResult<_, _, _> =
                     UnresolvedFunction::parse.then_ignore(end()).parse(&input);
-                if let ParseResult::Success (unresolved_function, _) = result
-                     {
+                if let ParseResult::Success (unresolved_function, _) = result {
                     // define named functions
                     match self.namespace.define(&unresolved_function) {
                         Ok (_) => println!("Defined function: {}", unresolved_function.name()),
@@ -74,8 +73,11 @@ impl Interpreter {
                     };
                     return;
                 } else if let ParseResult::Success (unresolved_function, _) =
-                    UnresolvedFunction::parse_free_terms.trace("Free term parser")
-                        .then_ignore(end().trace("End of input parser")).parse(&input) {
+                    UnresolvedFunction::parse_free_terms
+                        // .trace("Free term parser")
+                        .then_ignore(end()
+                            // .trace("End of input parser")
+                        ).parse(&input) {
                     // define free terms as temporary function
                     let function: FunctionReference = match self.namespace.define(&unresolved_function) {
                         Ok (terms) => terms,
@@ -90,7 +92,7 @@ impl Interpreter {
                     // evaluate free terms
                     match self.virtual_machine.evaluate(function) {
                         Ok (_) => {
-                            let mut printed_stack: String = "\n    ".to_string();
+                            let mut printed_stack: String = "    ".to_string();
                             for value in self.virtual_machine.data() {
                                 self.namespace.write_value(&mut printed_stack, &value).unwrap();
                                 printed_stack.push_str("  ");
@@ -122,6 +124,7 @@ impl Interpreter {
             .build();
         let mut editor: Editor<(), DefaultHistory> = Editor::<(), DefaultHistory>::with_config(config)
             .expect("Can initialize REPL");
+        println!("Compose Interpreter");
         // run REPL
         loop {
             self.read_evaluate_print(&mut editor);

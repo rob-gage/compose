@@ -1,6 +1,5 @@
 // Copyright Rob Gage 2025
 
-use std::fmt::format;
 use crate::{
     Combinator,
     Value,
@@ -40,8 +39,10 @@ impl UnresolvedTerm {
     /// Parses several whitespace-separated `UnresolvedTerms`
     pub fn parse_many(input: &Text) -> ParseResult<Vec<Self>> {
         separated(
-            Self::parse.trace("`UnresolvedTerm` parser"),
-            whitespace().trace("`UnresolvedTerm` whitespace separator")
+            Self::parse,
+                // .trace("`UnresolvedTerm` parser"),
+            whitespace()
+                // .trace("`UnresolvedTerm` whitespace separator")
         )
             .parse(input)
     }
@@ -127,7 +128,7 @@ fn integer(input: &Text) -> ParseResult<UnresolvedTerm> {
         token("-").then(number()),
         token("").then(number()),
     ])
-        .trace("`integer` parser function")
+        //.trace("`integer` parser function")
         .map(|(sign, number)| UnresolvedTerm::Resolved (Term::Data (Value::Integer (
             Integer::from_string(&format!("{}{}", sign, number))
                 .expect("Parser will never parse an invalid integer")
