@@ -473,21 +473,18 @@ impl Combinator {
                     Some (accumulator),
                 ) => {
                     let mut function: Function = Function::Composed(Vec::with_capacity(list.len()));
-                    let lambda: Function = reference.get(environment);
-                    stack.push(Value::List(Vec::with_capacity(list.len())));
+                    stack.push(accumulator);
                     for value in list {
                         function = function.extended([
                             Term::Data (value),
                             Term::Data (Value::Lambda (reference.clone())),
                             Term::Combinator (Apply),
-                            Term::Combinator (Append)
                         ].into_iter())
                     }
-                    println!("{:?}", lambda.body());
                     Push (function)
                 }
-                _ => Error ("Cannot perform `join` unless there are two lists on top of the stack\
-                ".to_string()),
+                _ => Error ("Cannot perform `fold` unless there is a lambda above a list above an \
+                accumulator on top of the stack".to_string()),
             }
 
             Join => match (stack.pop(), stack.pop()) {
@@ -496,14 +493,13 @@ impl Combinator {
                     stack.push(Value::List (list_a));
                     Continue
                 }
-                _ => Error ("Cannot perform `join` unless there are two lists on top of the stack\
-                ".to_string()),
+                _ => Error ("Cannot perform `join` unless there are two lists on top of the stack"
+                    .to_string()),
             }
 
             Map => match (stack.pop(), stack.pop()) {
                 (Some (Value::Lambda (reference)), Some (Value::List (list))) => {
                     let mut function: Function = Function::Composed(Vec::with_capacity(list.len()));
-                    let lambda: Function = reference.get(environment);
                     stack.push(Value::List(Vec::with_capacity(list.len())));
                     for value in list {
                         function = function.extended([
@@ -513,7 +509,6 @@ impl Combinator {
                             Term::Combinator (Append)
                         ].into_iter())
                     }
-                    println!("{:?}", lambda.body());
                     Push (function)
                 }
                 _ => Error ("Cannot perform `map` unless there is a lambda above a list on top of \
