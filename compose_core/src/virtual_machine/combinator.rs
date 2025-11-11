@@ -226,13 +226,13 @@ combinators! {
     Append
     ; "append",
 
-    /// ## Count
+    /// ## Length
     ///
     /// `[x] -> a`
     ///
     /// Turns a list on top of the stack into its size
     Length
-    ; "count",
+    ; "length",
 
     /// ## Filter
     ///
@@ -432,7 +432,7 @@ impl Combinator {
 
             Deep => match (stack.pop(), stack.pop()) {
                 (Some (Value::Integer (integer)), Some (Value::Lambda (reference))) => {
-                    if let Some (data) = stack.pop_slice(integer.as_stack_index(stack.size())) {
+                    if let Some (data) = stack.pop_slice(integer.as_wrapping_index(stack.size())) {
                         let lambda: Function = reference.get(environment)
                             .extended(data.into_iter().map(|value| Term::Data(value)));
                         Push (lambda)
@@ -516,8 +516,20 @@ impl Combinator {
                 _ => Error ("Cannot perform `fold` unless there is a lambda above a list above an \
                 accumulator on top of the stack".to_string()),
             }
-            
-            Index => todo!(),
+
+            Index => match (stack.pop(), stack.pop()) {
+                (Some (Value::Integer (integer)), Some (Value::List (items))) => {
+                    let index: usize = integer.as_wrapping_index(items.len());
+                    if index != usize::MAX {
+                        stack.push(items.get(index).unwrap().clone());
+                        Continue
+                    } else { Error ("Cannot perform `index` operation on an empty list"
+                        .to_string())}
+                    
+                }
+                _ => Error ("Cannot perform `index` operation unless there is an integer on \
+                    top of the stack, and a list below it".to_string())
+            },
 
             Join => match (stack.pop(), stack.pop()) {
                 (Some (Value::List (list_b)), Some (Value::List (mut list_a))) => {
@@ -575,7 +587,7 @@ impl Combinator {
             } else { Error ("Not enough items in the stack to be hopped".to_string()) },
 
             Pick => if let Some (Value::Integer (integer)) = stack.pop() {
-                let Some (indexed) = stack.get_from_top(integer.as_stack_index(stack.size()))
+                let Some (indexed) = stack.get_from_top(integer.as_wrapping_index(stack.size()))
                 else { return Error ("Cannot perform `pick` on an empty stack.".to_string()); } ;
                 stack.push(indexed.clone());
                 Continue
