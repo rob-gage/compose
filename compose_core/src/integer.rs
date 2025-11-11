@@ -24,6 +24,9 @@ impl Integer {
             .ok() // convert result to option
             .map(Self) // apply `Integer` constructor
     }
+    
+    /// Creates a new `Integer` from a `usize`
+    pub fn from_usize(usize: usize) -> Self { Self (BigInt::from(usize)) }
 
     /// Returns the `Integer` as a `String`
     pub fn to_string(&self) -> String {

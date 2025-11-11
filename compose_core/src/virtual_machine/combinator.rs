@@ -231,7 +231,7 @@ combinators! {
     /// `[x] -> a`
     ///
     /// Turns a list on top of the stack into its size
-    Count
+    Length
     ; "count",
 
     /// ## Filter
@@ -252,6 +252,14 @@ combinators! {
     /// from top of the stack) with each element of the list.
     Fold
     ; "fold",
+
+    /// ## Index
+    ///
+    /// `# [x] -> a`
+    ///
+    /// Returns the value at a given index in a list
+    Index
+    ; "index",
 
     /// ## Join
     ///
@@ -456,8 +464,15 @@ impl Combinator {
                 _ => Error ("Cannot perform `append` unless there is a list below the value to \
                 be appended to it on the stack".to_string()),
             }
-            
-            Count => unimplemented!(),
+
+            Length => match stack.pop() {
+                Some (Value::List (items)) => {
+                    stack.push(Value::Integer (Integer::from_usize(items.len())));
+                    Continue
+                }
+                _ => Error ("Cannot perform `length` unless there is a list on top of the stack"
+                    .to_string()),
+            },
 
             Filter => match (stack.pop(), stack.pop()) {
                 (
@@ -501,6 +516,8 @@ impl Combinator {
                 _ => Error ("Cannot perform `fold` unless there is a lambda above a list above an \
                 accumulator on top of the stack".to_string()),
             }
+            
+            Index => todo!(),
 
             Join => match (stack.pop(), stack.pop()) {
                 (Some (Value::List (list_b)), Some (Value::List (mut list_a))) => {
