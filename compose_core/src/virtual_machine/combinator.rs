@@ -6,7 +6,7 @@ use crate::{
 };
 use std::mem::swap;
 use crate::Term;
-use crate::virtual_machine::Combinator::Map;
+use crate::virtual_machine::Combinator::{Fold, Map};
 use super::{
     ControlAction::{
         self,
@@ -270,6 +270,14 @@ combinators! {
     Join
     ; "join",
 
+    /// ## Keep
+    ///
+    /// `... a b -> ... b OR ...`
+    ///
+    /// Returns an element on top of the stack if the element below it is true
+    Keep
+    ; "keep",
+
     /// ## Map
     ///
     /// `[x] |f| -> [y]`
@@ -466,6 +474,27 @@ impl Combinator {
                 be appended to it on the stack".to_string()),
             }
 
+            // Filter => match (stack.pop(), stack.pop()) {
+            //     (
+            //         Some (Value::Lambda (reference)),
+            //         Some (Value::List (list)),
+            //     ) => {
+            //         let mut function: Function = Function::Composed(Vec::with_capacity(list.len()));
+            //         stack.push(Value::List(Vec::with_capacity(list.len())));
+            //         for value in list {
+            //             function = function.extended([
+            //                 Term::Data (value),
+            //                 Term::Data (Value::Lambda (reference.clone())),
+            //                 Term::Combinator (Apply),
+            //                 Term::Data (Value::Lambda ()),
+            //             ].into_iter())
+            //         }
+            //         Push (function)
+            //     }
+            //     _ => Error ("Cannot perform `filter` unless there is a lambda above a list on top \
+            //     of the stack".to_string()),
+            // }
+
             Fold => match (stack.pop(), stack.pop(), stack.pop()) {
                 (
                     Some (Value::Lambda (reference)),
@@ -495,6 +524,15 @@ impl Combinator {
                 }
                 _ => Error ("Cannot perform `join` unless there are two lists on top of the stack"
                     .to_string()),
+            }
+
+            Keep => match (stack.pop(), stack.pop()) {
+                (Some (value), Some (Value::Boolean (boolean))) => {
+                    if boolean { stack.push(value) }
+                    Continue
+                }
+                _ => Error ("Cannot perform `keep` unless there is a value above a boolean on top \
+                of the stack".to_string())
             }
 
             Map => match (stack.pop(), stack.pop()) {
