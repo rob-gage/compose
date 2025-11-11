@@ -451,6 +451,10 @@ impl Combinator {
                 _ => Error ("Cannot perform `under` operation unless there is a lambda under \
                 another item on top of the stack".to_string()),
             }
+
+            // list combinators
+
+
             
             // stack manipulation combinators
 

@@ -20,6 +20,9 @@ pub enum UnresolvedTerm {
     /// An unresolved lambda term
     UnresolvedLambda (Vec<UnresolvedTerm>),
 
+    /// An unresolved list term
+    UnresolvedList (Vec<UnresolvedTerm>),
+
 }
 
 impl UnresolvedTerm {
@@ -28,6 +31,7 @@ impl UnresolvedTerm {
     pub fn parse(input: &Text) -> ParseResult<Self> {
         choice([
             lambda,
+            list,
             boolean,
             integer,
             combinator,
@@ -119,6 +123,31 @@ fn lambda(input: &Text) -> ParseResult<UnresolvedTerm> {
     )
         .map(|terms| UnresolvedTerm::UnresolvedLambda (terms))
         .parse(input)
+}
+
+
+/// Parses a list term
+fn list(input: &Text) -> ParseResult<UnresolvedTerm> {
+    match delimited(
+        token("[").then(whitespace().or_not()),
+        UnresolvedTerm::parse_many,
+        whitespace().or_not().then(token("]"))
+    )
+        .map(|terms| UnresolvedTerm::UnresolvedList (terms))
+        .parse(input) {
+        ModeResult::Success (UnresolvedTerm::UnresolvedList (terms), _) => {
+            for term in terms.clone() {
+                match term {
+                    UnresolvedTerm::Resolved (Term::Data (_)) => continue,
+                    UnresolvedTerm::UnresolvedLambda (_) => continue,
+                    _ => return ModeResult::Failure((), vec![])
+                }
+            }
+            ModeResult::Success (UnresolvedTerm::UnresolvedList (terms), vec![])
+        }
+        _ => ModeResult::Failure((), vec![])
+    }
+
 }
 
 

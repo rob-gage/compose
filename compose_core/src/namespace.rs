@@ -24,6 +24,7 @@ use crate::{
     UnresolvedFunction,
     UnresolvedTerm
 };
+use crate::Value::Lambda;
 
 /// Allows definition and retrieval of named functions and anonymous functions
 pub struct Namespace {
@@ -94,7 +95,7 @@ impl Namespace {
             Value::List (items) => {
                 w.write_str("[ ")?;
                 for item in items {
-                    self.write_value(w, value)?;
+                    self.write_value(w, item)?;
                     w.write_char(' ')?;
                 }
                 w.write_char(']')
@@ -138,6 +139,31 @@ fn resolve(
                     }
                 );
                 resolved.push(Term::Data (lambda));
+            }
+            // resolve lists
+            UnresolvedList (list_items) => {
+                let mut items: Vec<Value> = Vec::with_capacity(list_items.len());
+                for item in list_items {
+                    match item {
+                        Resolved (Term::Data (value)) => items.push(value.clone()),
+                        UnresolvedLambda (lambda_body) => {
+                            let lambda_reference: FunctionReference
+                                = FunctionReference::reserve(environment);
+                            let lambda: Value = Value::Lambda (
+                                match resolve(environment, functions_by_name, lambda_reference, lambda_body) {
+                                    Ok (_) => LambdaReference::from_function(lambda_reference),
+                                    Err (lambda_undefined) => {
+                                        undefined.extend(lambda_undefined);
+                                        LambdaReference::from_function(lambda_reference)
+                                    }
+                                }
+                            );
+                            items.push(lambda);
+                        }
+                        _ => unreachable!("No other terms should be parsed by list parsers")
+                    }
+                }
+                resolved.push(Term::Data (Value::List (items)));
             }
         }
     }
