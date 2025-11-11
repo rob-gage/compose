@@ -2,19 +2,18 @@
 
 [package]
 name = "compositor"
-version = "0.0.1"
+version = "0.1.0"
 license = "MIT"
-description = "The command line interface for the Compose language"
+description = "An interactive environment for the Compose language"
 readme = "../README.md"
 repository = "https://github.com/Compose-Language/compose"
 edition = "2021"
 
 [[bin]]
-name = "compose_cli"
+name = "cmpstr"
 path = "src/main.rs"
 
 [dependencies]
-clap = { version = "4.5.51", features = ["derive"] }
 compose_core = { version = "0.0.0", path = "../core" }
 pups = "0.1.13"
 rustyline = "17.0.0"
