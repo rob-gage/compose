@@ -37,7 +37,7 @@ dependencies = [
 
 [[package]]
 name = "compose_core"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "num-bigint",
  "num-traits",
@@ -47,7 +47,7 @@ dependencies = [
 
 [[package]]
 name = "compositor"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "compose_core",
  "pups",
