@@ -10,7 +10,6 @@ repository = "https://github.com/Compose-Language/compose"
 edition = "2021"
 
 [dependencies]
-codespan-reporting = "0.12.0"
 num-bigint = "0.4.6"
 num-traits = "0.2.19"
 pups = "0.1.13"

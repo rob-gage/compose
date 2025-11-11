@@ -1,7 +1,7 @@
 # Copyright Rob Gage 2025
 
 [package]
-name = "compose_cli"
+name = "compositor"
 version = "0.0.1"
 license = "MIT"
 description = "The command line interface for the Compose language"

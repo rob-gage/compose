@@ -1,5 +1,5 @@
 # Copyright Rob Gage 2025
 
 [workspace]
-members = ["cli", "core"]
+members = ["compositor", "core"]
 resolver = "2"
