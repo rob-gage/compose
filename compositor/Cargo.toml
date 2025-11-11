@@ -6,7 +6,7 @@ version = "0.1.0"
 license = "MIT"
 description = "An interactive environment for the Compose language"
 readme = "../README.md"
-repository = "https://github.com/Compose-Language/compose"
+repository = "https://github.com/rob-gage/compose"
 edition = "2021"
 
 [[bin]]
@@ -14,6 +14,6 @@ name = "cmpstr"
 path = "src/main.rs"
 
 [dependencies]
-compose_core = { version = "0.0.0", path = "../core" }
+compose_core = { version = "0.1.0", path = "../compose_core" }
 pups = "0.1.13"
 rustyline = "17.0.0"

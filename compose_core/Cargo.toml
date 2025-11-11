@@ -2,11 +2,11 @@
 
 [package]
 name = "compose_core"
-version = "0.0.0"
+version = "0.1.0"
 license = "MIT"
-description = "The virtual machine for the Compose language"
+description = "The Compose Language implementation"
 readme = "../README.md"
-repository = "https://github.com/Compose-Language/compose"
+repository = "https://github.com/rob-gage/compose"
 edition = "2021"
 
 [dependencies]

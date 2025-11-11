@@ -1,5 +1,5 @@
 # Copyright Rob Gage 2025
 
 [workspace]
-members = ["compositor", "core"]
+members = ["compositor", "compose_core"]
 resolver = "2"

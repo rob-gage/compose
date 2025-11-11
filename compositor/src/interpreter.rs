@@ -1,7 +1,5 @@
 // Copyright Rob Gage 2025
 
-mod process_command;
-
 use compose_core::{
     Value,
     FunctionReference,
@@ -65,7 +63,7 @@ impl Interpreter {
                     match self.namespace.define(&unresolved_function) {
                         Ok (_) => println!("Defined function: {}", unresolved_function.name()),
                         Err (missing) => {
-                            println!("Function not defined. Missing required functions:\n");
+                            println!("Function not defined. Missing required functions:");
                             for name in missing {
                                 println!("  {}", name);
                             }
@@ -123,7 +121,6 @@ impl Interpreter {
             .build();
         let mut editor: Editor<(), DefaultHistory> = Editor::<(), DefaultHistory>::with_config(config)
             .expect("Can initialize REPL");
-        println!("Compose Interpreter");
         // run REPL
         loop {
             self.read_evaluate_print(&mut editor);
