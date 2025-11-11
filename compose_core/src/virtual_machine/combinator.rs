@@ -3,7 +3,6 @@
 use crate::{
     Value,
     Integer,
-    Term,
 };
 use std::mem::swap;
 use super::{
@@ -80,16 +79,6 @@ combinators! {
     Divide
     ; "/",
 
-
-    /// ## Modulo
-    ///
-    /// `a b -> (a % b)`
-    ///
-    /// Evaluates to the remainder of the second number on top of the stack divided by the first
-    /// number on top of the stack
-    Modulo
-    ; "%",
-
     /// ## Multiply
     ///
     /// `a b -> (a * b)`
@@ -97,6 +86,15 @@ combinators! {
     /// Multiplies the two numbers on top of the stack
     Multiply
     ; "*",
+
+    /// ## Remainder
+    ///
+    /// `a b -> (a % b)`
+    ///
+    /// Evaluates to the remainder of the second number on top of the stack divided by the first
+    /// number on top of the stack
+    Remainder
+    ; "%",
 
     /// ## Subtract
     ///
@@ -169,9 +167,7 @@ combinators! {
     /// Evaluates to a true boolean value if the integer on top of the stack is greater than the
     /// one below it.
     LessThan
-    ; "<"
-    
-,
+    ; "<",
 
     /// # Functional Combinators
 
@@ -183,15 +179,15 @@ combinators! {
     Apply
     ; "apply",
 
-    /// ## If
+    /// ## Branch
     ///
     /// `a |f| |g| b -> a ...`
     ///
     /// Applies function `|f|` (third from top of stack) to term `a` (fourth from top of stack) if
     /// boolean `b` (top of stack) is a true, otherwise applies function `|g|` (second from tbe top
     /// of stack) to term `a` and the stack below
-    If
-    ; "if",
+    Branch
+    ; "?",
 
     /// ## Compose
     ///
@@ -358,7 +354,7 @@ impl Combinator {
 
             Divide => arithmetic_operation(stack, |a, b| a / b),
 
-            Modulo => arithmetic_operation(stack, |a, b| a % b),
+            Remainder => arithmetic_operation(stack, |a, b| a % b),
 
             Multiply => arithmetic_operation(stack, |a, b| a * b),
 
@@ -429,7 +425,7 @@ impl Combinator {
                     top of the stack, and a lambda below it".to_string())
             }
 
-            If => match (stack.pop(), stack.pop()) {
+            Branch => match (stack.pop(), stack.pop()) {
                 (Some(Value::Lambda (false_reference)), Some(Value::Lambda(true_reference))) =>
                     match stack.pop() {
                         Some(Value::Boolean (boolean)) => if boolean {

@@ -80,7 +80,7 @@ fn combinator(input: &Text) -> ParseResult<UnresolvedTerm> {
         // arithmetic
         combinator_parser(Add),
         combinator_parser(Divide),
-        combinator_parser(Modulo),
+        combinator_parser(Remainder),
         combinator_parser(Multiply),
         combinator_parser(Subtract),
         // boolean logic
@@ -96,7 +96,7 @@ fn combinator(input: &Text) -> ParseResult<UnresolvedTerm> {
         combinator_parser(Apply),
         combinator_parser(Compose),
         combinator_parser(Deep),
-        combinator_parser(If),
+        combinator_parser(Branch),
         combinator_parser(Under),
         // stack manipulation
         combinator_parser(Copy),
