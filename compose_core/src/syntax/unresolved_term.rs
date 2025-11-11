@@ -103,7 +103,7 @@ fn combinator(input: &Text) -> ParseResult<UnresolvedTerm> {
         combinator_parser(Branch),
         combinator_parser(Under),
         // lists
-        combinator_parser(Construct),
+        combinator_parser(Append),
         combinator_parser(Join),
         // stack manipulation
         combinator_parser(Copy),

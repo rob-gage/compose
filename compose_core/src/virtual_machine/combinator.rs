@@ -223,8 +223,8 @@ combinators! {
     ///
     /// Prepends an element `a` (second from top of the stack) to the list `[x]` (top of the
     /// stack)
-    Construct
-    ; "construct",
+    Append
+    ; "append",
 
     /// ## Count
     ///
@@ -455,14 +455,24 @@ impl Combinator {
 
             // list combinators
 
-            Construct => match (stack.pop(), stack.pop()) {
+            Append => match (stack.pop(), stack.pop()) {
                 (Some (value), Some (Value::List (mut list_items))) => {
                     list_items.push(value);
                     stack.push(Value::List (list_items));
                     Continue
                 }
-                _ => Error ("Cannot perform `construct` unless there is a list below the value to \
+                _ => Error ("Cannot perform `append` unless there is a list below the value to \
                 be appended to it on the stack".to_string()),
+            }
+
+            Join => match (stack.pop(), stack.pop()) {
+                (Some (Value::List (list_b)), Some (Value::List (mut list_a))) => {
+                    list_a.extend(list_b);
+                    stack.push(Value::List (list_a));
+                    Continue
+                }
+                _ => Error ("Cannot perform `join` unless there are two lists on top of the stack\
+                ".to_string()),
             }
             
             // stack manipulation combinators
