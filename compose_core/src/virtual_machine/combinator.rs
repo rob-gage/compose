@@ -405,7 +405,7 @@ impl Combinator {
             },
 
             Compose => match (stack.pop(), stack.pop()) {
-                (Some (Value::Lambda (a_reference)), Some (Value::Lambda (b_reference))) => {
+                (Some (Value::Lambda (b_reference)), Some (Value::Lambda (a_reference))) => {
                     stack.push(Value::Lambda (a_reference.compose(b_reference)));
                     Continue
                 }
