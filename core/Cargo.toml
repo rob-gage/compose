@@ -13,5 +13,5 @@ edition = "2021"
 codespan-reporting = "0.12.0"
 num-bigint = "0.4.6"
 num-traits = "0.2.19"
-pups = { version = "0.1.12", path = "../../pups/library" }
+pups = "0.1.13"
 smallvec = "1.15.1"

@@ -307,7 +307,9 @@ dependencies = [
 
 [[package]]
 name = "pups"
-version = "0.1.12"
+version = "0.1.13"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "08b55df06f76353660bbf2db30564d870362f1431017055d90c9be40244bc8ea"
 dependencies = [
  "pups_core",
  "pups_text",
@@ -315,11 +317,15 @@ dependencies = [
 
 [[package]]
 name = "pups_core"
-version = "0.1.12"
+version = "0.1.13"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "257f729bf621a358423ff127cd585c660a9bf7298b784b02de44f7291900dda8"
 
 [[package]]
 name = "pups_text"
-version = "0.1.12"
+version = "0.1.13"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "2cf5e3eadd76aaa1f82c7576451e97de1357feeb41682e77aa0ac6103216b334"
 dependencies = [
  "pups_core",
  "unicode-ident",
@@ -327,9 +333,9 @@ dependencies = [
 
 [[package]]
 name = "quote"
-version = "1.0.41"
+version = "1.0.42"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ce25767e7b499d1b604768e7cde645d14cc8584231ea6b295e9c9eb22c02e1d1"
+checksum = "a338cc41d27e6cc6dce6cefc13a0729dfbb81c262b1f519331575dd80ef3067f"
 dependencies = [
  "proc-macro2",
 ]
@@ -423,9 +429,9 @@ checksum = "7da8b5736845d9f2fcb837ea5d9e2628564b3b043a70948a3f0b778838c5fb4f"
 
 [[package]]
 name = "syn"
-version = "2.0.108"
+version = "2.0.110"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "da58917d35242480a05c2897064da0a80589a2a0476c9a3f2fdc83b53502e917"
+checksum = "a99801b5bd34ede4cf3fc688c5919368fea4e4814a4664359503e6015b280aea"
 dependencies = [
  "proc-macro2",
  "quote",

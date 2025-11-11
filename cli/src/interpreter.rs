@@ -74,7 +74,6 @@ impl Interpreter {
                     return;
                 } else if let ParseResult::Success (unresolved_function, _) =
                     UnresolvedFunction::parse_free_terms
-                        // .trace("Free term parser")
                         .then_ignore(end()
                             // .trace("End of input parser")
                         ).parse(&input) {

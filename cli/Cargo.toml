@@ -16,5 +16,5 @@ path = "src/main.rs"
 [dependencies]
 clap = { version = "4.5.51", features = ["derive"] }
 compose_core = { version = "0.0.0", path = "../core" }
-pups = { version = "0.1.12", path = "../../pups/library" }
+pups = "0.1.13"
 rustyline = "17.0.0"
