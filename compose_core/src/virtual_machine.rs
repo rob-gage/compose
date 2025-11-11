@@ -47,6 +47,17 @@ impl VirtualMachine {
                 match action {
                     ControlAction::Continue => continue,
                     ControlAction::Error(error) => return Err(error),
+                    // ControlAction::FoldList { start, list, function } => {
+                    //     todo!()
+                    // },
+                    // ControlAction::FilterList { list, function } => {
+                    //     todo!()
+                    // },
+                    // ControlAction::MapList { list, function } => {
+                    //     for value in list {
+                    //         
+                    //     }
+                    // }
                     ControlAction::Pop => break,
                     ControlAction::Push(function) => {
                         control_stack.push_frame(frame);

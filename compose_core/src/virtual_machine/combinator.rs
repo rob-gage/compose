@@ -5,7 +5,8 @@ use crate::{
     Integer,
 };
 use std::mem::swap;
-use crate::virtual_machine::Combinator::Branch;
+use crate::Term;
+use crate::virtual_machine::Combinator::Map;
 use super::{
     ControlAction::{
         self,
@@ -432,9 +433,9 @@ impl Combinator {
 
             Deep => match (stack.pop(), stack.pop()) {
                 (Some (Value::Integer (integer)), Some (Value::Lambda (reference))) => {
-                    if let Some (terms) = stack.pop_slice(integer.as_stack_index(stack.size())) {
+                    if let Some (data) = stack.pop_slice(integer.as_stack_index(stack.size())) {
                         let lambda: Function = reference.get(environment)
-                            .extended_with_data(&terms);
+                            .extended(data.into_iter().map(|value| Term::Data(value)));
                         Push (lambda)
                     } else { Error ("Cannot perform `deep` operation unless there is an index on \
                     top of the stack, and a lambda below it".to_string()) }
@@ -446,7 +447,7 @@ impl Combinator {
             Under => match (stack.pop(), stack.pop()) {
                 (Some(Value::Lambda (reference)), Some(top)) => {
                     let lambda: Function = reference.get(environment)
-                        .extended_with_data(&[top]);
+                        .extended([Term::Data (top)].into_iter());
                     Push (lambda)
                 }
                 _ => Error ("Cannot perform `under` operation unless there is a lambda under \
@@ -465,6 +466,30 @@ impl Combinator {
                 be appended to it on the stack".to_string()),
             }
 
+            Fold => match (stack.pop(), stack.pop(), stack.pop()) {
+                (
+                    Some (Value::Lambda (reference)),
+                    Some (Value::List (list)),
+                    Some (accumulator),
+                ) => {
+                    let mut function: Function = Function::Composed(Vec::with_capacity(list.len()));
+                    let lambda: Function = reference.get(environment);
+                    stack.push(Value::List(Vec::with_capacity(list.len())));
+                    for value in list {
+                        function = function.extended([
+                            Term::Data (value),
+                            Term::Data (Value::Lambda (reference.clone())),
+                            Term::Combinator (Apply),
+                            Term::Combinator (Append)
+                        ].into_iter())
+                    }
+                    println!("{:?}", lambda.body());
+                    Push (function)
+                }
+                _ => Error ("Cannot perform `join` unless there are two lists on top of the stack\
+                ".to_string()),
+            }
+
             Join => match (stack.pop(), stack.pop()) {
                 (Some (Value::List (list_b)), Some (Value::List (mut list_a))) => {
                     list_a.extend(list_b);
@@ -473,6 +498,26 @@ impl Combinator {
                 }
                 _ => Error ("Cannot perform `join` unless there are two lists on top of the stack\
                 ".to_string()),
+            }
+
+            Map => match (stack.pop(), stack.pop()) {
+                (Some (Value::Lambda (reference)), Some (Value::List (list))) => {
+                    let mut function: Function = Function::Composed(Vec::with_capacity(list.len()));
+                    let lambda: Function = reference.get(environment);
+                    stack.push(Value::List(Vec::with_capacity(list.len())));
+                    for value in list {
+                        function = function.extended([
+                            Term::Data (value),
+                            Term::Data (Value::Lambda (reference.clone())),
+                            Term::Combinator (Apply),
+                            Term::Combinator (Append)
+                        ].into_iter())
+                    }
+                    println!("{:?}", lambda.body());
+                    Push (function)
+                }
+                _ => Error ("Cannot perform `map` unless there is a lambda above a list on top of \
+                stack".to_string()),
             }
             
             // stack manipulation combinators

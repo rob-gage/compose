@@ -4,6 +4,7 @@ use crate::{
     Environment,
     Function,
     Term,
+    Value,
 };
 use smallvec::SmallVec;
 use super::DataStack;
@@ -16,6 +17,20 @@ pub enum ControlAction<'vm> {
     Continue,
     /// Halts evaluation, and returns an error
     Error (String),
+    // /// Folds a list into one value
+    // FoldList {
+    //     start: Value,
+    //     list: Vec<Value>,
+    //     function: Function<'vm>,
+    // },
+    // FilterList {
+    //     list: Vec<Value>,
+    //     function: Function<'vm>,
+    // },
+    // MapList {
+    //     list: Vec<Value>,
+    //     function: Function<'vm>,
+    // },
     /// Pops a `ControlFrame` off the `ControlStack` before continuing evaluation
     Pop,
     /// Pushes a new `ControlFrame` to the `ControlStack` before continuing evaluation
