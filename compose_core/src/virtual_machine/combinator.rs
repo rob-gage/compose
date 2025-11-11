@@ -6,7 +6,6 @@ use crate::{
 };
 use std::mem::swap;
 use crate::Term;
-use crate::virtual_machine::Combinator::{Fold, Map};
 use super::{
     ControlAction::{
         self,
@@ -254,14 +253,6 @@ combinators! {
     Fold
     ; "fold",
 
-    /// ## Head
-    ///
-    /// `[x] -> a`
-    ///
-    /// Returns the first element in the list on top of the stack
-    Head
-    ; "head",
-
     /// ## Join
     ///
     /// `[x] [y] -> [x y]`
@@ -270,13 +261,13 @@ combinators! {
     Join
     ; "join",
 
-    /// ## Keep
+    /// ## MaybeAppend
     ///
     /// `... a b -> ... b OR ...`
     ///
-    /// Returns an element on top of the stack if the element below it is true
-    Keep
-    ; "keep",
+    /// Appends an element to a list conditionally (internal use only)
+    MaybeAppend
+    ; ":",
 
     /// ## Map
     ///
@@ -286,14 +277,6 @@ combinators! {
     /// from top of the stack) creating a new list
     Map
     ; "map",
-
-    /// ## Tail
-    ///
-    /// `[x] -> a`
-    ///
-    /// Returns everything but the first element in the list on top of the stack
-    Tail
-    ; "tail",
 
     /// # Stack Manipulation Combinators
 
@@ -473,27 +456,30 @@ impl Combinator {
                 _ => Error ("Cannot perform `append` unless there is a list below the value to \
                 be appended to it on the stack".to_string()),
             }
+            
+            Count => unimplemented!(),
 
-            // Filter => match (stack.pop(), stack.pop()) {
-            //     (
-            //         Some (Value::Lambda (reference)),
-            //         Some (Value::List (list)),
-            //     ) => {
-            //         let mut function: Function = Function::Composed(Vec::with_capacity(list.len()));
-            //         stack.push(Value::List(Vec::with_capacity(list.len())));
-            //         for value in list {
-            //             function = function.extended([
-            //                 Term::Data (value),
-            //                 Term::Data (Value::Lambda (reference.clone())),
-            //                 Term::Combinator (Apply),
-            //                 Term::Data (Value::Lambda ()),
-            //             ].into_iter())
-            //         }
-            //         Push (function)
-            //     }
-            //     _ => Error ("Cannot perform `filter` unless there is a lambda above a list on top \
-            //     of the stack".to_string()),
-            // }
+            Filter => match (stack.pop(), stack.pop()) {
+                (
+                    Some (Value::Lambda (reference)),
+                    Some (Value::List (list)),
+                ) => {
+                    let mut function: Function = Function::Composed(Vec::with_capacity(list.len()));
+                    stack.push(Value::List(Vec::with_capacity(list.len())));
+                    for value in list {
+                        function = function.extended([
+                            Term::Data (value.clone()),
+                            Term::Data (Value::Lambda (reference.clone())),
+                            Term::Combinator (Apply),
+                            Term::Data (value),
+                            Term::Combinator (MaybeAppend),
+                        ].into_iter())
+                    }
+                    Push (function)
+                }
+                _ => Error ("Cannot perform `filter` unless there is a lambda above a list on top \
+                of the stack".to_string()),
+            }
 
             Fold => match (stack.pop(), stack.pop(), stack.pop()) {
                 (
@@ -526,13 +512,15 @@ impl Combinator {
                     .to_string()),
             }
 
-            Keep => match (stack.pop(), stack.pop()) {
-                (Some (value), Some (Value::Boolean (boolean))) => {
-                    if boolean { stack.push(value) }
+            MaybeAppend => match (stack.pop(), stack.pop(), stack.pop()) {
+                (Some (value), Some (Value::Boolean (boolean)), Some (Value::List (mut items))) => {
+                    if boolean {
+                        items.push(value);
+                    }
+                    stack.push(Value::List (items));
                     Continue
                 }
-                _ => Error ("Cannot perform `keep` unless there is a value above a boolean on top \
-                of the stack".to_string())
+                _ => Error ("Internal combinator error".to_string())
             }
 
             Map => match (stack.pop(), stack.pop()) {
@@ -597,10 +585,6 @@ impl Combinator {
                 );
                 Continue
             }
-
-            // --------------------------------------------------------------------------------
-
-            _ => Error (String::from("Combinator not implemented yet."))
 
         }
     }
