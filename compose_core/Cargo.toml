@@ -2,7 +2,7 @@
 
 [package]
 name = "compose_core"
-version = "0.1.1"
+version = "0.1.2"
 license = "MIT"
 description = "The Compose Language implementation"
 readme = "../README.md"

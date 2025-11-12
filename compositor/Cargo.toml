@@ -2,7 +2,7 @@
 
 [package]
 name = "compositor"
-version = "0.1.1"
+version = "0.1.2"
 license = "MIT"
 description = "An interactive environment for the Compose language"
 readme = "../README.md"
@@ -15,6 +15,6 @@ path = "src/main.rs"
 
 [dependencies]
 colored = "3.0.0"
-compose_core = { version = "0.1.1", path = "../compose_core" }
+compose_core = { version = "0.1.2", path = "../compose_core" }
 pups = "0.1.13"
 rustyline = "17.0.0"

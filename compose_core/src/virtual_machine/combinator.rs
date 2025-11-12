@@ -475,10 +475,7 @@ impl Combinator {
             },
 
             Filter => match (stack.pop(), stack.pop()) {
-                (
-                    Some (Value::Lambda (reference)),
-                    Some (Value::List (list)),
-                ) => {
+                (Some (Value::Lambda (reference)), Some (Value::List (list))) => {
                     let mut function: Function = Function::Composed(Vec::with_capacity(list.len()));
                     stack.push(Value::List(Vec::with_capacity(list.len())));
                     for value in list {
