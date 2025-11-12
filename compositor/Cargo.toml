@@ -14,6 +14,7 @@ name = "cmpstr"
 path = "src/main.rs"
 
 [dependencies]
+colored = "3.0.0"
 compose_core = { version = "0.1.1", path = "../compose_core" }
 pups = "0.1.13"
 rustyline = "17.0.0"

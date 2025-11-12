@@ -4,9 +4,10 @@ mod interpreter;
 
 use interpreter::Interpreter;
 
+use colored::Colorize;
 
 fn main() {
     let mut interpreter: Interpreter = Interpreter::new();
-    println!("\n  Compositor\n  Compose Interactive Environment\n");
+    println!("\n    {}\n    Compose Interactive Environment\n\n", "Compositor".green().bold());
     interpreter.run();
 }

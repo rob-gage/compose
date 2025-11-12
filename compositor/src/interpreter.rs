@@ -1,5 +1,6 @@
 // Copyright Rob Gage 2025
 
+use colored::Colorize;
 use compose_core::{
     Value,
     FunctionReference,
@@ -38,14 +39,14 @@ impl Interpreter {
 
     /// Runs one iteration of the main `Interpreter` loop
     fn read_evaluate_print(&mut self, editor: &mut Editor<(), DefaultHistory>) {
-        match editor.readline("  λ> ") {
+        match editor.readline(&format!("{}", "  λ> ".blue())) {
             Ok (input) => {
                 let input: &str = input.trim();
                 // execute interpreter commands
                 match input {
                     // exits the `Interpeter`
                     "!exit" => {
-                        println!("Exiting.");
+                        println!("  Exiting.");
                         exit(0)
                     }
                     // resets the `Interpreter`
@@ -61,11 +62,16 @@ impl Interpreter {
                 if let ParseResult::Success (unresolved_function, _) = result {
                     // define named functions
                     match self.namespace.define(&unresolved_function) {
-                        Ok (_) => println!("Defined function: {}", unresolved_function.name()),
+                        Ok (_) => println!(
+                            "  {} {}",
+                            "Defined function:".purple(),
+                            unresolved_function.name().bright_purple()
+                        ),
                         Err (missing) => {
-                            println!("Function not defined. Missing required functions:");
+                            println!("  {}", "Function not defined. Missing required functions:"
+                                .red().dimmed());
                             for name in missing {
-                                println!("  {}", name);
+                                println!("    {}", name.red());
                             }
                         }
                     };
@@ -79,9 +85,10 @@ impl Interpreter {
                     let function: FunctionReference = match self.namespace.define(&unresolved_function) {
                         Ok (terms) => terms,
                         Err (missing) => {
-                            println!("Function not defined. Missing required functions:\n");
+                            println!("  {}", "Function not defined. Missing required functions:"
+                                .red().dimmed());
                             for name in missing {
-                                println!("  {}", name);
+                                println!("    {}", name.red());
                             }
                             return;
                         }
@@ -96,11 +103,11 @@ impl Interpreter {
                             }
                             println!("\n{}\n", printed_stack);
                         },
-                        Err (error) => eprintln!("Error: {}", error)
+                        Err (error) => eprintln!("  {} {}", "Error:".red(), error.red().dimmed()),
                     }
                 } else {
-                    println!("Unrecognized input. This Compose interpreter only accepts functions \
-                    to be defined, and free terms to be evaluated");
+                    println!("{}", "  Unrecognized input. This Compose interpreter only accepts
+                    functions to be defined, and free terms to be evaluated".red().dimmed());
                 }
             }
             Err (ReadlineError::Interrupted) => {
