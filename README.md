@@ -39,3 +39,10 @@ The Compose interactive environment, Compositor, can be installed from Cargo.
 `cargo install compositor`
 
 To run it, use command `cmpstr`.
+
+## Planned Features
+
++ Lambda Recursion
++ Running code from files
++ Strings
++ Type checking combinators
