@@ -31,3 +31,11 @@ Compose provides the `map`, `filter`, and `fold` functions for processing lists.
 Compose allows the definition of recursive functions. Currently it only supports recursion of named functions, but recursion from within lambdas is a planned feature.
 
 ![Recursive Functions Example](assets/compose-recursive.gif)
+
+## Installation
+
+The Compose interactive environment, Compositor, can be installed from Cargo.
+
+`cargo install compositor`
+
+To run it, use command `cmpstr`.
