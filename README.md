@@ -8,6 +8,26 @@ For example, in a simple concatenative style:
 
 `2 3 +`
 
-This pushes `2` and `3` onto the stack, then applies the `+` word, adding the two numbers and leaving `5` on the stack.
+This pushes `2` and `3` onto the stack, then applies the `+` function, adding the two numbers and leaving `5` on the stack.
 
 Compose follows this model with a minimal set of primitives, allowing programs to be constructed by composing small, reusable functions. Its design emphasizes consistent stack behavior and predictable composition, keeping the core language simple and easily comprehensible.
+
+## Features
+
+### Lambda Composition
+
+Compose allows functions to be stored as data on the stack as lambdas, and these lambdas can be composed into more complex functions. They can be manipulated like other stack data, and passed around as arguments for other functions.
+
+![Lambda Composition Example](assets/compose-lambdas.gif)
+
+### List Processing
+
+Compose provides the `map`, `filter`, and `fold` functions for processing lists. Lists can store an unlimited number of items, and do not require that their elements be the same type.
+
+![List Processing Example](assets/compose-lists.gif)
+
+### Recursive Functions
+
+Compose allows the definition of recursive functions. Currently it only supports recursion of named functions, but recursion from within lambdas is a planned feature.
+
+![Recursive Functions Example](assets/compose-recursive.gif)
