@@ -217,11 +217,11 @@ combinators! {
 
     /// # List Processing Combinators
 
-    /// ## Construct
+    /// ## Append
     ///
     /// `a [x] -> [y]`
     ///
-    /// Prepends an element `a` (second from top of the stack) to the list `[x]` (top of the
+    /// Append an element `a` (second from top of the stack) to the list `[x]` (top of the
     /// stack)
     Append
     ; "append",
